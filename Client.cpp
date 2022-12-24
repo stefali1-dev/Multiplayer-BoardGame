@@ -1,16 +1,24 @@
 #include "Client.h"
+#include "Interface.h"
 
-Client::Client() : connected(0)
+Client::Client() : connected(0), sv_msg(""), cl_msg("")
 {
 }
 
 Client::~Client()
 {
-    if(connected)
+    if (connected)
         close(sd);
 }
 
-int Client::connect_(const char * sv_adress, const char * input_port)
+void Client::setCl_msg(char* str){
+
+    strcpy(this->cl_msg, str);
+    
+}
+
+
+int Client::connect_(const char *sv_adress, const char *input_port)
 {
     /* stabilim portul */
     port = atoi(input_port);
@@ -40,7 +48,7 @@ int Client::connect_(const char * sv_adress, const char * input_port)
     return 0;
 }
 
-int Client::read_(char* sv_msg)
+int Client::read_()
 {
     int must_reply = 0;
 
@@ -51,31 +59,29 @@ int Client::read_(char* sv_msg)
         return -1;
     }
 
-    if( msg[ strlen(msg) - 1] == '1')
+    if (msg[strlen(msg) - 1] == '1')
         must_reply = 1;
 
-    msg[ strlen(msg) - 1] = '\0';
+    msg[strlen(msg) - 1] = '\0';
 
-    strcpy(sv_msg, msg);
+    strcpy(this->sv_msg, msg);
     printf("Server: %s\n", msg);
 
     return must_reply;
 }
 
-int Client::write_(char* cl_msg)
+int Client::reply()
 {
     if (write(sd, cl_msg, 100) <= 0)
-        {
-            printf("Eroare la write() spre server.\n");
-            return -1;
-        }
+    {
+        printf("Eroare la write() spre server.\n");
+        return -1;
+    }
     return 0;
 }
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-    char sv_msg[100];
-    char cl_msg[100];
     /* exista toate argumentele in linia de comanda? */
     if (argc != 3)
     {
@@ -83,30 +89,31 @@ int main (int argc, char *argv[])
         return -1;
     }
 
-    Client* C = new Client();
+    Client *C = new Client();
 
     C->connect_(argv[1], argv[2]);
 
-    // get input
-    bzero(cl_msg, 100);
-    printf("Numele jucatorului: ");
-    fflush(stdout);
-    read(0, cl_msg, 100);
+    // trimitem numele jucatorului
+    // C->setCl_msg( player_name)
+    C->reply();
 
-    C->write_(cl_msg);
+    while (1)
+    {
 
-    while(1){
+        bool must_reply = C->read_();
 
-        bool must_reply = C->read_(sv_msg);
+        if (must_reply)
+        {
 
-        if(must_reply){
             // get input
+            /*
             bzero(cl_msg, 100);
             printf("Mutare: ");
             fflush(stdout);
             read(0, cl_msg, 100);
+            */
 
-            C->write_(cl_msg);
+            C->reply();
         }
     }
 
