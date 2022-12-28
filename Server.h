@@ -11,18 +11,21 @@
 #include <string.h>
 #include <stdlib.h>
 #include <array>
+#include <iostream>
 
 #define PORT 2728
 
 struct PathNode
 {
-    int playerIndex; // only player who can step on this node;  0 means everyone
+    int nodeIndex;
+    int playerIndex; // only player who can step on this node;  -1 means everyone
     bool isBase;
     PathNode *next;
     PathNode *nextFinal; // first node of final path
-    int pawnCount[4];    // cati pioni are fiecare jucator in nod
 
-    PathNode() : playerIndex(0), pawnCount({0}), isBase(0)
+    int pawnCount[4]; // cati pioni are fiecare jucator in nod
+
+    PathNode() : nodeIndex(-1), playerIndex(-1), pawnCount({0}), isBase(0)
     {
     }
 
@@ -32,14 +35,14 @@ struct PathNode
     }
 
     void initializeIndex(int player_index, bool is_base) // set the player index for the nodes where only the player can step
-    {                                      // (base nodes)
+    {                                                    // (base nodes)
         playerIndex = player_index;
         isBase = is_base;
     }
 
     bool isCrossingNode()
     {
-        if (next && nextFinal)
+        if (nextFinal != nullptr)
             return true;
         return false;
     }
@@ -60,20 +63,20 @@ private:
         base[2] = new PathNode();
         base[3] = new PathNode();
 
-        base[0]->initializeIndex(1, true);
-        base[1]->initializeIndex(2, true);
-        base[2]->initializeIndex(3, true);
-        base[3]->initializeIndex(4, true);
+        base[0]->initializeIndex(0, true);
+        base[1]->initializeIndex(1, true);
+        base[2]->initializeIndex(2, true);
+        base[3]->initializeIndex(3, true);
 
         final[0] = new PathNode();
         final[1] = new PathNode();
         final[2] = new PathNode();
         final[3] = new PathNode();
 
-        final[0]->initializeIndex(1);
-        final[1]->initializeIndex(2);
-        final[2]->initializeIndex(3);
-        final[3]->initializeIndex(4);
+        final[0]->initializeIndex(0);
+        final[1]->initializeIndex(1);
+        final[2]->initializeIndex(2);
+        final[3]->initializeIndex(3);
 
         base[0]->next = cp[0];
         base[1]->next = cp[1];
@@ -84,6 +87,7 @@ private:
     void createPath(PathNode *cp1, PathNode *cp2, PathNode *final2)
     {
         PathNode *current = cp1;
+        cp1->nodeIndex = nodeCount++;
 
         // making a path of 9 nodes from chekcpoint 1 to checkpoint 2
         for (int i = 0; i < 9; i++)
@@ -91,6 +95,7 @@ private:
             PathNode *newNode = new PathNode();
             current->next = newNode;
             current = newNode;
+            current->nodeIndex = nodeCount++;
         }
 
         current->next = cp2;
@@ -109,11 +114,12 @@ private:
     }
 
 public:
+    int nodeCount;
     PathNode *cp[4];    // checkpoints
     PathNode *base[4];  // bases
     PathNode *final[4]; // first node of final paths
 
-    PathList()
+    PathList() : nodeCount(0)
     {
         initImportantPoints();
 
@@ -141,7 +147,8 @@ public:
         // initializing payer pawns
         for (int i = 0; i < 4; i++)
         {
-            pawn[i] = pathList->base[i];
+            pawn[i] = pathList->base[playerIndex];
+            pawn[i]->pawnCount[i]++;
         }
     }
 
@@ -151,25 +158,58 @@ public:
 
         while (count)
         {
-            if (pawn[pawnNr]->isCrossingNode() && pawn[pawnNr]->playerIndex == playerIndex)
+            if (pawn[pawnNr]->isCrossingNode() && pawn[pawnNr]->nextFinal->playerIndex == playerIndex)
             {
+                printf("Pionul %d a ajuns la final nodes\n", pawnNr);
                 pawn[pawnNr] = pawn[pawnNr]->nextFinal;
             }
             else
             {
                 if (pawn[pawnNr]->next == nullptr)
                 {
-                    printf("Eroare, nu poti muta pionul ala");
+                    printf("Eroare, nu poti muta pionul ala\n");
+                    return;
                 }
+
                 else
                 {
+                    //
                     pawn[pawnNr] = pawn[pawnNr]->next;
                 }
             }
             count--;
         }
 
+        printf("Am terminat de mutat pionul %d al playerului %d\n", pawnNr, playerIndex);
         pawn[pawnNr]->pawnCount[playerIndex]++;
+    }
+
+    void validPawnsMove(int dice, bool* validPawns)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            bool isValid = true;
+            int count = dice;
+            PathNode *current = pawn[i];
+
+            while (count)
+            {
+                if (pawn[i]->isCrossingNode() && pawn[i]->nextFinal->playerIndex == playerIndex)
+                {
+                    current = current->nextFinal;
+                }
+                else
+                {
+                    current = current->next;
+                }
+
+                if (current == nullptr)
+                {
+                    isValid = false;
+                }
+            }
+            validPawns[i] = isValid; // saves valid pawns
+        }
     }
 
     void sendPawnToBase(int pawnNr, PathList *pathList)
@@ -180,9 +220,9 @@ public:
         pawn[pawnNr]->pawnCount[playerIndex]++;
     }
 
-    void sendPawnToCheckpoint(int pawnNr)
+    PathNode *getPawn(int nr)
     {
-        pawn[pawnNr] = pawn[pawnNr]->next;
+        return pawn[nr];
     }
 };
 
@@ -202,7 +242,7 @@ public:
 
         for (int i = 0; i < 4; i++)
         {
-            player[i] = new Player(i + 1);
+            player[i] = new Player(i);
             player[i]->initializePawns(pathList);
         }
     }
@@ -210,10 +250,65 @@ public:
     {
     }
 
-    void movePawn(int index, int pawnNr, int dice)
+    void movePawn(int playerIndex, int pawnNr, int dice)
     {
-        ///////////////// AICI ERAM
-        ///////////////// TRE SA FAC SA MUTE SI SA IASA DIN BAZA
+        if (player[playerIndex]->getPawn(pawnNr)->isBase)
+        {
+            if (dice < 6)
+            {
+                printf("Trebuie un 6 ca sa iesi din baza\n");
+                return;
+            }
+            else
+            {
+                player[playerIndex]->movePawn(pawnNr, 1);
+            }
+        }
+        else
+        {
+            player[playerIndex]->movePawn(pawnNr, dice);
+        }
+        for (int i = 0; i < 4; i++) // iterate through players
+        {
+
+            if (i != playerIndex)
+            {
+                for (int j = 0; j < 4; j++) // iterate through pawns
+                {
+
+                    if (player[i]->getPawn(j) == player[playerIndex]->getPawn(pawnNr)) // is pawn collision
+                    {
+                        player[i]->sendPawnToBase(j, pathList);
+                        printf("Am trimis la baza pionul %d al playerului %d\n", j, i);
+                    }
+                }
+            }
+            else
+            {
+                printf("player %d, pion %d, pozitia %d\n", i, 0, player[playerIndex]->getPawn(0)->nodeIndex);
+                printf("player %d, pion %d, pozitia %d\n", i, 1, player[playerIndex]->getPawn(1)->nodeIndex);
+                printf("player %d, pion %d, pozitia %d\n", i, 2, player[playerIndex]->getPawn(2)->nodeIndex);
+                printf("player %d, pion %d, pozitia %d\n", i, 3, player[playerIndex]->getPawn(3)->nodeIndex);
+            }
+            printf("\n");
+        }
+    }
+
+    int playerFinnished()
+    {
+        for (int i = 0; i < 4; i++) // iterate through players
+        {
+            PathNode *current = pathList->final[i];
+            while (current != nullptr)
+            {
+                if (current->pawnCount[i] == 0)
+                    return -1;
+
+                current = current->next;
+            }
+
+            return i; // player i has won
+        }
     }
 };
 
