@@ -66,6 +66,9 @@ Server::Server(/* args */): dArrIndex(0)
 
     printf("Asteptam la portul %d...\n", PORT);
     fflush(stdout);
+
+    // game related
+    gameBoard = new GameBoard();
 }
 
 int Server::writeToAll(char *str)
@@ -136,10 +139,10 @@ int Server::selectLoop()
             if (fd != sd && FD_ISSET(fd, &readfds))
             {
                 sayHello(fd);
-                
+                /*
                 char msg[100];
                 strcpy(msg, "TO ALL");
-                writeToAll(msg);
+                writeToAll(msg);*/
             }
         } /* for */
     }

@@ -55,10 +55,11 @@ public:
     void display(sf::RenderWindow &window);
 };
 
+/*
 class BoardDot
 {
 private:
-    /* data */
+
     Button DotBtn;
     sf::Color color;
     bool isBase;
@@ -66,17 +67,18 @@ private:
     int correspondingPlayer;
 
 public:
-    BoardDot(/* args */);
+    BoardDot();
     ~BoardDot();
 };
 
-BoardDot::BoardDot(/* args */)
+BoardDot::BoardDot()
 {
 }
 
 BoardDot::~BoardDot()
 {
 }
+*/
 
 
 class GameBoard
