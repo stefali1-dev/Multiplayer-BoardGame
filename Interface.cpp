@@ -121,18 +121,23 @@ Interface::Interface(float width, float height) : menuOrder(0)
     }
 
     window.create(sf::VideoMode(width, height), "SFML works!", sf::Style::Close);
-    TextInputBox.create((width - 500) / 2, height / 3, 500, 65, "Nume Jucator");
+    TextInputBox.create((width - 500) / 2, height / 3, 500, 65, "Server IP");
     SubmitBtn.create((width - 200) / 2, height / 1.8, 200, 100, "Submit");
 }
 
 char *Interface::getPlayerName()
 {
-    if (playerName)
-    {
-        return playerName;
-    }
-    printf("Player Name is NULL");
-    return NULL;
+    return playerName;
+}
+
+char *Interface::getIp()
+{
+    return ip;
+}
+
+char *Interface::getPort()
+{
+    return port;
 }
 
 void Interface::displayFirstScreen()
@@ -180,22 +185,22 @@ void Interface::displayFirstScreen()
                         switch (menuOrder)
                         {
                         case 0:
-                            // name input
-                            playerName = inputText;
+                            // ip input
+                            strcpy(ip, inputText);
                             break;
                         case 1:
-                            // ip input
-                            ip = inputText;
+                            // port input
+                            strcpy(port, inputText);
                             break;
                         case 2:
-                            // ip input
-                            port = inputText;
+                            // name input
+                            strcpy(playerName, inputText);
                             break;
                         }
 
-                        std::cout << inputText << std::endl;
+                        //std::cout << inputText << std::endl;
 
-                        if (playerName != NULL)
+                        if (inputText != NULL)
                         {
                             window.clear(sf::Color(236, 233, 211));
                             TextInputBox.ereaseText();
@@ -204,11 +209,11 @@ void Interface::displayFirstScreen()
                             {
                             case 0:
                                 // name input
-                                TextInputBox.updateInfo("IP Server");
+                                TextInputBox.updateInfo("Server Port");
                                 break;
                             case 1:
                                 // ip input
-                                TextInputBox.updateInfo("Port Server");
+                                TextInputBox.updateInfo("Player Name");
                                 break;
                             case 2:
                                 // ip input
@@ -241,113 +246,16 @@ void Interface::displayFirstScreen()
 
 void Interface::displayGameScreen()
 {
-    bool exitScreen = false;
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
-
-            if (event.type == sf::Event::TextEntered)
-            {
-                if (event.text.unicode < 128)
-                {
-                    char c = static_cast<char>(event.text.unicode);
-
-                    if (isalnum(c) || c == '.')
-                    {
-                        TextInputBox.addToInput(static_cast<sf::String>(event.text.unicode));
-                    }
-                }
-            }
-
-            if (event.type == sf::Event::KeyPressed)
-            {
-                if (event.key.code == sf::Keyboard::BackSpace)
-                {
-                    TextInputBox.eraseLastCh();
-                }
-            }
-
-            if (event.type == sf::Event::MouseButtonPressed)
-            {
-                if (event.mouseButton.button == sf::Mouse::Left)
-                {
-                    if (SubmitBtn.isClicked(event.mouseButton.x, event.mouseButton.y))
-                    {
-                        std::string str = static_cast<std::string>(TextInputBox.getInput());
-
-                        char *inputText = str.data();
-
-                        switch (menuOrder)
-                        {
-                        case 0:
-                            // name input
-                            playerName = inputText;
-                            break;
-                        case 1:
-                            // ip input
-                            ip = inputText;
-                            break;
-                        case 2:
-                            // ip input
-                            port = inputText;
-                            break;
-                        }
-
-                        std::cout << inputText << std::endl;
-
-                        if (playerName != NULL)
-                        {
-                            window.clear(sf::Color(236, 233, 211));
-                            TextInputBox.ereaseText();
-
-                            switch (menuOrder)
-                            {
-                            case 0:
-                                // name input
-                                TextInputBox.updateInfo("IP Server");
-                                break;
-                            case 1:
-                                // ip input
-                                TextInputBox.updateInfo("Port Server");
-                                break;
-                            case 2:
-                                // ip input
-                                break;
-                            }
-
-                            TextInputBox.display(window);
-
-                            menuOrder++;
-                            if (menuOrder > 2)
-                                exitScreen = true;
-                        }
-                    }
-                }
-            }
-        }
-
-        window.clear(sf::Color(236, 233, 211));
-
-        if (exitScreen == true)
-            break;
-
-        SubmitBtn.display(window);
-        TextInputBox.display(window);
-        window.display();
-    }
 }
-
-int main()
+/*int main()
 {
     Interface *interface = new Interface(900.f, 900.f);
 
-    interface->displayFirstScreen();
+    char infoArr[3][50];
+
+    interface->displayFirstScreen(infoArr);
 
     interface->displayGameScreen();
 
     return 0;
-}
+}*/

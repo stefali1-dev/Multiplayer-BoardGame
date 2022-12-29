@@ -11,11 +11,13 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <string>
+#include "Interface.cpp"
 
 class Client
 {
 private:
     /* data */
+    bool must_reply;
     int port;
     int sd;                    // descriptorul de socket
     struct sockaddr_in server; // structura folosita pentru conectare
@@ -23,14 +25,16 @@ private:
     char sv_msg[100];
     char cl_msg[100];
     int player_index;
-
+    Interface* interface;
+    
 public:
-
+    
     Client();
     ~Client();
     void setCl_msg(char* str);
     int connect_(const char * sv_adress, const char * input_port);
     int read_();
-    int reply();
+    int writeCl_msg();
+    void mainLoop();
 };
 

@@ -1,9 +1,10 @@
 #include "Server.h"
 
-void addChar(char* str, char c){
-        int len = strlen(str);
-        str[len] = c;
-        str[len + 1] = '\0';
+void addChar(char *str, char c)
+{
+    int len = strlen(str);
+    str[len] = c;
+    str[len + 1] = '\0';
 }
 
 char *conv_addr(struct sockaddr_in address)
@@ -20,7 +21,7 @@ char *conv_addr(struct sockaddr_in address)
     return (str);
 }
 
-Server::Server(/* args */): dArrIndex(0)
+Server::Server(/* args */) : dArrIndex(0)
 {
     /* creare socket */
     if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -71,17 +72,17 @@ Server::Server(/* args */): dArrIndex(0)
     gameBoard = new GameBoard();
 }
 
-int Server::writeToAll(char *str)
+int Server::writeToAllExcept(int playerIndex)
 {
+    addChar(sv_msg, '0');
 
-    char buffer[100];
-    addChar(str, '0');
+    for (int i = 0; i < dArrIndex; i++)
+    {
 
-    for(int i = 0; i < dArrIndex; i++){
+        if (i != playerIndex && dArr[i] != sd)
+        {
 
-        if (dArr[i] != sd){
-
-            if (write(dArr[i], str, sizeof(buffer)) < 0)
+            if (write(dArr[i], sv_msg, sizeof(sv_msg)) < 0)
             {
                 printf(" Eroare la write() catre client.\n");
                 return -1;
@@ -92,67 +93,124 @@ int Server::writeToAll(char *str)
     return 0;
 }
 
+int Server::writeTo(int playerIndex)
+{
+    addChar(sv_msg, '1');
+
+    if (write(dArr[playerIndex], sv_msg, sizeof(sv_msg)) < 0)
+    {
+        printf(" Eroare la write() catre client.\n");
+        return -1;
+    }
+    return 0;
+}
+
+void Server::getClientName(int fd)
+{
+    int bytes;
+    bytes = read(fd, cl_msg, sizeof(cl_msg));
+    if (bytes < 0)
+    {
+        perror("Eroare la read() de la client.\n");
+    }
+
+    names.push_back(cl_msg);
+}
+
 int Server::selectLoop()
 {
     while (1)
     {
-        /* ajustam multimea descriptorilor activi (efectiv utilizati) */
         bcopy((char *)&actfds, (char *)&readfds, sizeof(readfds));
 
-        /* apelul select() */
         if (select(nfds + 1, &readfds, NULL, NULL, &tv) < 0)
         {
             perror(" Eroare la select().\n");
             return errno;
         }
-        /* vedem daca e pregatit socketul pentru a-i accepta pe clienti */
         if (FD_ISSET(sd, &readfds))
         {
-            /* pregatirea structurii client */
             len = sizeof(from);
             bzero(&from, sizeof(from));
 
-            /* a venit un client, acceptam conexiunea */
             client = accept(sd, (struct sockaddr *)&from, &len);
 
-            /* eroare la acceptarea conexiunii de la un client */
             if (client < 0)
             {
                 perror(" Eroare la accept().\n");
                 continue;
             }
 
-            if (nfds < client) /* ajusteaza valoarea maximului */
-                nfds = client;
-
-            /* includem in lista de descriptori activi si acest socket */
             FD_SET(client, &actfds);
             dArr[dArrIndex++] = client;
 
             printf(" S-a conectat clientul cu descriptorul %d, de la adresa %s.\n", client, conv_addr(from));
             fflush(stdout);
+
+            getClientName(client);
         }
-        /* vedem daca e pregatit vreun socket client pentru a trimite raspunsul */
-        for (fd = 0; fd <= nfds; fd++) /* parcurgem multimea de descriptori */
+
+        // vedem daca e pregatit vreun socket client pentru a trimite numele
+        if (gotAllNames())
         {
-            /* este un socket de citire pregatit? */
-            if (fd != sd && FD_ISSET(fd, &readfds))
-            {
-                sayHello(fd);
-                /*
-                char msg[100];
-                strcpy(msg, "TO ALL");
-                writeToAll(msg);*/
-            }
-        } /* for */
+            printf("Got all names\n");
+            strcpy(sv_msg, "All players connected");
+            writeToAllExcept(-1);
+
+            break;
+        }
     }
 }
 
-/* realizeaza primirea si retrimiterea unui mesaj unui client */
+void Server::gameLoop()
+{
+    turn = 0;
+    std::string str;
+    while (1)
+    {
+        int dice = rand() % 6 + 1;
+
+        str = "Dice: " + std::to_string(dice) + " | Turn: " + names[turn];
+
+        strcpy(sv_msg, str.c_str());
+        writeToAllExcept(turn);
+
+        str = "Dice: " + std::to_string(dice) + " | Your turn -> select pawn";
+        strcpy(sv_msg, str.c_str());
+        writeTo(turn);
+
+        int *selectedPawn;
+        if (read(dArr[turn], &selectedPawn, sizeof(int)) < 0)
+        {
+            perror("Eroare la read() de la client.\n");
+            return;
+        }
+
+        while (gameBoard->isValidPawnMove(turn, *selectedPawn, dice) == false)
+        {
+            strcpy(sv_msg, "You can't move that pawn -> select another pawn");
+            writeTo(turn);
+
+            if (read(dArr[turn], &selectedPawn, sizeof(int)) < 0)
+            {
+                perror("Eroare la read() de la client.\n");
+                return;
+            }
+        }
+
+        gameBoard->movePawn(turn, *selectedPawn, dice);
+
+        str = std::to_string(turn) + std::to_string(*selectedPawn) + std::to_string(dice) + std::to_string(2);
+        strcpy(sv_msg, str.c_str());
+        writeToAllExcept(-1);; // info to update on the board 
+    }
+}
+
+/*
 int Server::sayHello(int fd)
 {
-    char buffer[100];        /* mesajul */
-    int bytes;               /* numarul de octeti cititi/scrisi */
+    char buffer[100];
+    int bytes;
     char msg[100];           // mesajul primit de la client
     char msgrasp[100] = " "; // mesaj de raspuns pentru client
 
@@ -164,7 +222,6 @@ int Server::sayHello(int fd)
     }
     printf("Mesajul a fost receptionat...%s\n", msg);
 
-    /*pregatim mesajul de raspuns */
     bzero(msgrasp, 100);
     strcat(msgrasp, "Hello ");
     strcat(msgrasp, msg);
@@ -181,11 +238,7 @@ int Server::sayHello(int fd)
 
     return bytes;
 }
-
-int Server::handleCommand(char *str)
-{
-    return 0;
-}
+*/
 
 int main(int argc, char *argv[])
 {
@@ -194,4 +247,6 @@ int main(int argc, char *argv[])
     Server *S = new Server();
 
     S->selectLoop();
+
+    S->gameLoop();
 }

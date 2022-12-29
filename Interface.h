@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cstring>
+#include "GameBoard.h"
 
 #define W 900
 #define H 900
@@ -55,39 +56,6 @@ public:
     void display(sf::RenderWindow &window);
 };
 
-/*
-class BoardDot
-{
-private:
-
-    Button DotBtn;
-    sf::Color color;
-    bool isBase;
-    bool isFinal;
-    int correspondingPlayer;
-
-public:
-    BoardDot();
-    ~BoardDot();
-};
-
-BoardDot::BoardDot()
-{
-}
-
-BoardDot::~BoardDot()
-{
-}
-*/
-
-
-class GameBoard
-{
-private:
-    /* data */
-public:
-    GameBoard(/* args */);
-};
 
 
 class Interface
@@ -100,12 +68,16 @@ private:
     InputBox TextInputBox;
     Button SubmitBtn;
 
-    char *playerName;
-    char *ip;
-    char *port;
+    char playerName[50];
+    char ip[50];
+    char port[50];
 
 public:
     Interface(float width, float height);
+
+    char *getIp();
+
+    char *getPort();
 
     char *getPlayerName();
 
