@@ -14,5 +14,4 @@ int main()
     gameBoard->movePawn(1, 0, 6);
     gameBoard->movePawn(1, 0, 1);
 
-    printf("\n A CASTIGAT %d\n", gameBoard->playerFinnished());
 }

@@ -6,6 +6,7 @@
 
 struct PathNode
 {
+    float x, y;
     int nodeIndex;
     int playerIndex; // only player who can step on this node;  -1 means everyone
     bool isBase;
@@ -218,13 +219,13 @@ public:
 class GameBoard
 {
 private:
-    PathList *pathList;
-    Player *player[4];
     bool isFinished;
     bool allConnected;
     int turn;
 
 public:
+    PathList *pathList;
+    Player *player[4];
     GameBoard(/* args */) : isFinished(0), allConnected(0), turn(1)
     {
         pathList = new PathList();
@@ -289,23 +290,19 @@ public:
         player[playerIndex]->validPawnsMove(dice, validPawns);
 
         return validPawns[pawnNr];
-
     }
 
-    int playerFinnished()
+    bool hasFinnished(int playerIndex)
     {
-        for (int i = 0; i < 4; i++) // iterate through players
+        PathNode *current = pathList->final[playerIndex];
+        while (current != nullptr)
         {
-            PathNode *current = pathList->final[i];
-            while (current != nullptr)
-            {
-                if (current->pawnCount[i] == 0)
-                    return -1;
+            if (current->pawnCount[playerIndex] == 0)
+                return false;
 
-                current = current->next;
-            }
-
-            return i; // player i has won
+            current = current->next;
         }
+
+        return true; // player[playerIndex] has won
     }
 };

@@ -11,7 +11,6 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <string>
-#include "Interface.cpp"
 
 class Client
 {
@@ -25,7 +24,6 @@ private:
     char sv_msg[100];
     char cl_msg[100];
     int player_index;
-    Interface* interface;
     
 public:
     

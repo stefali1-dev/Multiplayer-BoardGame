@@ -74,7 +74,8 @@ Server::Server(/* args */) : dArrIndex(0)
 
 int Server::writeToAllExcept(int playerIndex)
 {
-    addChar(sv_msg, '0');
+    if (sv_msg[strlen(sv_msg) - 1] != '2')
+        addChar(sv_msg, '0');
 
     for (int i = 0; i < dArrIndex; i++)
     {
@@ -170,12 +171,12 @@ void Server::gameLoop()
     {
         int dice = rand() % 6 + 1;
 
-        str = "Dice: " + std::to_string(dice) + " | Turn: " + names[turn];
+        str = "Dice: " + std::to_string(dice) + "\nTurn: " + names[turn];
 
         strcpy(sv_msg, str.c_str());
         writeToAllExcept(turn);
 
-        str = "Dice: " + std::to_string(dice) + " | Your turn -> select pawn";
+        str = "Dice: " + std::to_string(dice) + "\nYour turn -> select pawn";
         strcpy(sv_msg, str.c_str());
         writeTo(turn);
 
@@ -188,7 +189,8 @@ void Server::gameLoop()
 
         while (gameBoard->isValidPawnMove(turn, *selectedPawn, dice) == false)
         {
-            strcpy(sv_msg, "You can't move that pawn -> select another pawn");
+            str = "Dice: " + std::to_string(dice) + "\nYou can't move that pawn -> select another pawn";
+            strcpy(sv_msg, str.c_str());
             writeTo(turn);
 
             if (read(dArr[turn], &selectedPawn, sizeof(int)) < 0)
@@ -199,10 +201,23 @@ void Server::gameLoop()
         }
 
         gameBoard->movePawn(turn, *selectedPawn, dice);
+        bool hasFinised = gameBoard->hasFinnished(turn);
 
-        str = std::to_string(turn) + std::to_string(*selectedPawn) + std::to_string(dice) + std::to_string(2);
+        //       playerIndex                 pawnNr                         dice
+        str = std::to_string(turn) + std::to_string(*selectedPawn) + std::to_string(dice);
+
+        //       hasFinnished(0 || 1)           2(format)
+        str += std::to_string(hasFinised) + std::to_string(2);
+
         strcpy(sv_msg, str.c_str());
-        writeToAllExcept(-1);; // info to update on the board 
+        writeToAllExcept(-1);
+        ; // info to update on the board
+
+        if (hasFinised)
+        {
+            break;
+        }
+        turn = (turn + 1) % 4;
     }
 }
 

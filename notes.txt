@@ -1,1 +1,2 @@
 maybe remove pawn count from PathNode*
+max one pawn per dot

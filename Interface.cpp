@@ -37,6 +37,11 @@ bool Button::isClicked(float mouse_x, float mouse_y)
            (mouse_y >= y && mouse_y <= y + height);
 }
 
+void Button::updateText(const char *str)
+{
+    text.setString(str);
+}
+
 InputBox::InputBox() : input("")
 {
 }
@@ -108,9 +113,14 @@ void InputBox::display(sf::RenderWindow &window)
     inputText.setString(input);
     window.draw(inputText);
 }
-
-GameBoard::GameBoard(/* args */)
+TextBox::TextBox()
 {
+
+}
+
+void Interface::generateBoard()
+{
+
 }
 
 Interface::Interface(float width, float height) : menuOrder(0)
@@ -122,7 +132,10 @@ Interface::Interface(float width, float height) : menuOrder(0)
 
     window.create(sf::VideoMode(width, height), "SFML works!", sf::Style::Close);
     TextInputBox.create((width - 500) / 2, height / 3, 500, 65, "Server IP");
-    SubmitBtn.create((width - 200) / 2, height / 1.8, 200, 100, "Submit");
+    Btn.create((width - 200) / 2, height / 1.8, 200, 100, "Submit");
+    gameBoard = new InteraceGameBoard();
+
+
 }
 
 char *Interface::getPlayerName()
@@ -143,6 +156,8 @@ char *Interface::getPort()
 void Interface::displayFirstScreen()
 {
     bool exitScreen = false;
+    Btn.updateText("Submit");
+
     while (window.isOpen())
     {
         sf::Event event;
@@ -176,7 +191,7 @@ void Interface::displayFirstScreen()
             {
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
-                    if (SubmitBtn.isClicked(event.mouseButton.x, event.mouseButton.y))
+                    if (Btn.isClicked(event.mouseButton.x, event.mouseButton.y))
                     {
                         std::string str = static_cast<std::string>(TextInputBox.getInput());
 
@@ -198,7 +213,7 @@ void Interface::displayFirstScreen()
                             break;
                         }
 
-                        //std::cout << inputText << std::endl;
+                        // std::cout << inputText << std::endl;
 
                         if (inputText != NULL)
                         {
@@ -238,7 +253,7 @@ void Interface::displayFirstScreen()
             break;
         }
 
-        SubmitBtn.display(window);
+        Btn.display(window);
         TextInputBox.display(window);
         window.display();
     }
@@ -246,16 +261,56 @@ void Interface::displayFirstScreen()
 
 void Interface::displayGameScreen()
 {
+    Client* C = new Client();
+    bool exitScreen = false;
+    char s[30] = "INFO TEXT\nSECOND LINE";
+    InfoText.setText(s);
+
+    while (window.isOpen())
+    {
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+
+            if (event.type == sf::Event::MouseButtonPressed)
+            {
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    if (Btn.isClicked(event.mouseButton.x, event.mouseButton.y))
+                    {
+                        //
+                    }
+                }
+            }
+        }
+
+        window.clear(sf::Color(236, 233, 211));
+
+        if (exitScreen == true)
+        {
+            break;
+        }
+
+        InfoText.display(window);
+        gameBoard->display(window);
+        window.display();
+    }
 }
-/*int main()
+
+void Interface::displayEndScreen()
+{
+    Btn.updateText("Restart");
+}
+int main()
 {
     Interface *interface = new Interface(900.f, 900.f);
 
-    char infoArr[3][50];
-
-    interface->displayFirstScreen(infoArr);
+    interface->displayFirstScreen();
 
     interface->displayGameScreen();
 
     return 0;
-}*/
+
+}

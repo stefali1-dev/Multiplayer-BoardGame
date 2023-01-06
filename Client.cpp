@@ -126,13 +126,14 @@ void Client::mainLoop()
     }
 }
 
+/*
 int main(int argc, char *argv[])
 {
     Client *C = new Client();
 
     C->mainLoop();
 
-    /*if (argc != 3)
+    if (argc != 3)
     {
         printf("Sintaxa: %s <adresa_server> <port>\n", argv[0]);
         return -1;
@@ -164,7 +165,8 @@ int main(int argc, char *argv[])
 
             C->reply();
         }
-    }*/
+    }
 
     return 0;
 }
+*/
