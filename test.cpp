@@ -1,17 +1,9 @@
-#include "Server.h"
+#include "Interface.h"
 
 int main()
 {
-    GameBoard *gameBoard = new GameBoard();
+    InterfaceGameBoard *gameBoard = new InterfaceGameBoard();
 
     gameBoard->movePawn(0, 0, 6);
-    
-    gameBoard->movePawn(1, 0, 6);
-
-    gameBoard->movePawn(0, 0, 10);
-    gameBoard->movePawn(0, 0, 1);
-
-    gameBoard->movePawn(1, 0, 6);
-    gameBoard->movePawn(1, 0, 1);
 
 }

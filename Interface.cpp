@@ -115,42 +115,23 @@ void InputBox::display(sf::RenderWindow &window)
 }
 TextBox::TextBox()
 {
-
 }
 
 void Interface::generateBoard()
 {
-
 }
 
 Interface::Interface(float width, float height) : menuOrder(0)
 {
-    if (!font.loadFromFile("arial.ttf"))
-    {
-        printf("Eroare la font");
-    }
+    font.loadFromFile("./src/arial.ttf");
 
-    window.create(sf::VideoMode(width, height), "SFML works!", sf::Style::Close);
+    sf::ContextSettings settings;
+    settings.antialiasingLevel = 8;
+
+    window.create(sf::VideoMode(width, height), "SFML works!", sf::Style::Close, settings);
     TextInputBox.create((width - 500) / 2, height / 3, 500, 65, "Server IP");
     Btn.create((width - 200) / 2, height / 1.8, 200, 100, "Submit");
-    gameBoard = new InteraceGameBoard();
-
-
-}
-
-char *Interface::getPlayerName()
-{
-    return playerName;
-}
-
-char *Interface::getIp()
-{
-    return ip;
-}
-
-char *Interface::getPort()
-{
-    return port;
+    gameBoard = new InterfaceGameBoard();
 }
 
 void Interface::displayFirstScreen()
@@ -261,10 +242,11 @@ void Interface::displayFirstScreen()
 
 void Interface::displayGameScreen()
 {
-    Client* C = new Client();
+    Client *C = new Client();
     bool exitScreen = false;
     char s[30] = "INFO TEXT\nSECOND LINE";
     InfoText.setText(s);
+    int index = 6;
 
     while (window.isOpen())
     {
@@ -278,10 +260,7 @@ void Interface::displayGameScreen()
             {
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
-                    if (Btn.isClicked(event.mouseButton.x, event.mouseButton.y))
-                    {
-                        //
-                    }
+                    gameBoard->moveAndUpdatePawn(0, 0, 6);
                 }
             }
         }
@@ -312,5 +291,4 @@ int main()
     interface->displayGameScreen();
 
     return 0;
-
 }
