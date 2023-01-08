@@ -11,7 +11,7 @@ Client::~Client()
         close(sd);
 }
 
-void Client::setCl_msg(char *str)
+void Client::set_cl_msg(char *str)
 {
 
     strcpy(this->cl_msg, str);
@@ -47,8 +47,14 @@ int Client::connect_(const char *sv_adress, const char *input_port)
     return 0;
 }
 
+char* Client::get_sv_msg()
+{
+    return this->sv_msg;
+}
+
 int Client::read_()
 {
+    int read_status;
     char msg[100];
     if (read(sd, msg, 100) < 0)
     {
@@ -56,6 +62,8 @@ int Client::read_()
         return -1;
         ;
     }
+
+    printf("Server: %s\n", msg);
 
     if (strlen(msg) == 0)
     {
@@ -78,15 +86,13 @@ int Client::read_()
         break;
     }
 
-    msg[strlen(msg) - 1] = '\0';
-
     strcpy(this->sv_msg, msg);
-    printf("Server: %s\n", msg);
+    //printf("Server: %s\n", msg);
 
     return 0;
 }
 
-int Client::writeCl_msg()
+int Client::write_()
 {
     if (write(sd, cl_msg, 100) <= 0)
     {
@@ -103,11 +109,11 @@ void Client::mainLoop()
     // connect_(interface->getIp(), interface->getPort());
     connect_("0", "2728");
 
-    // setCl_msg(interface->getPlayerName());
+    // set_cl_msg(interface->getPlayerName());
     char str[100];
     strcpy(str, "Andrei");
-    setCl_msg(str);
-    writeCl_msg();
+    set_cl_msg(str);
+    write_();
 
     while (1)
     {
@@ -120,8 +126,8 @@ void Client::mainLoop()
         if (must_reply) // has to select pawn to move
         {
             // char* pawn = interface->getPawn();
-            // setCl_msg(pawn);
-            writeCl_msg();
+            // set_cl_msg(pawn);
+            write_();
         }
     }
 }
@@ -144,7 +150,7 @@ int main(int argc, char *argv[])
     C->connect_(argv[1], argv[2]);
 
     // trimitem numele jucatorului
-    // C->setCl_msg( player_name)
+    // C->set_cl_msg( player_name)
     C->reply();
 
     while (1)

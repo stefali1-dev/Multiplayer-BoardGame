@@ -123,6 +123,8 @@ void Interface::generateBoard()
 
 Interface::Interface(float width, float height) : menuOrder(0)
 {
+    C = new Client();
+
     font.loadFromFile("./src/arial.ttf");
 
     sf::ContextSettings settings;
@@ -134,7 +136,7 @@ Interface::Interface(float width, float height) : menuOrder(0)
     gameBoard = new InterfaceGameBoard();
 }
 
-void Interface::displayFirstScreen()
+void Interface::firstScreen()
 {
     bool exitScreen = false;
     Btn.updateText("Submit");
@@ -231,6 +233,14 @@ void Interface::displayFirstScreen()
 
         if (exitScreen == true)
         {
+            C->connect_(ip, port);
+
+            C->set_cl_msg(playerName);
+            C->write_(); // sending player name
+
+            C->read_();
+            C->player_index = (int)(C->get_sv_msg()[0] - 48); // saving player index
+
             break;
         }
 
@@ -240,41 +250,115 @@ void Interface::displayFirstScreen()
     }
 }
 
-void Interface::displayGameScreen()
+void Interface::gameScreen()
 {
-    Client *C = new Client();
     bool exitScreen = false;
-    char s[30] = "INFO TEXT\nSECOND LINE";
-    InfoText.setText(s);
-    int index = 6;
+    char sv_msg[100];
+    // InfoText.setText(s);
 
-    while (window.isOpen())
+    int sockets[2], child;
+
+    socketpair(AF_UNIX, SOCK_STREAM, 0, sockets);
+    child = fork();
+
+    if (child)
     {
-        sf::Event event;
-        while (window.pollEvent(event))
+        // parent - interface
+        while (window.isOpen())
         {
-            if (event.type == sf::Event::Closed)
-                window.close();
+            close(sockets[0]);
 
-            if (event.type == sf::Event::MouseButtonPressed)
+            sf::Event event;
+            while (window.pollEvent(event))
             {
-                if (event.mouseButton.button == sf::Mouse::Left)
+                if (event.type == sf::Event::Closed)
+                    window.close();
+            }
+
+            window.clear(sf::Color(236, 233, 211));
+
+            if (exitScreen == true)
+            {
+                break;
+            }
+
+            InfoText.display(window);
+            gameBoard->display(window);
+            window.display();
+
+            // citire mesaj de la server de afisat
+            read(sockets[1], sv_msg, 100);
+
+            char last_char = sv_msg[strlen(sv_msg) - 1];
+            printf("\n%c\n", last_char);
+
+            if (last_char == '0') // informative message
+                InfoText.setText(sv_msg);
+
+            else if (sv_msg[strlen(sv_msg) - 1] == '1') // we must send a move back
+            {
+                InfoText.setText(sv_msg);
+                int chosen_pawn = -1;
+
+                while (chosen_pawn == -1)
                 {
-                    gameBoard->moveAndUpdatePawn(0, 0, 6);
+                    while (window.pollEvent(event))
+                    {
+                        if (event.type == sf::Event::Closed)
+                            window.close();
+                        if (event.type == sf::Event::MouseButtonPressed)
+                        {
+                            if (event.mouseButton.button == sf::Mouse::Left)
+                            {
+                                // gameBoard->moveAndUpdatePawn(0, 0, 6);
+                                chosen_pawn = gameBoard->clickedPawn(C->player_index, event.mouseButton.x, event.mouseButton.y);
+                            }
+                        }
+                    }
                 }
+
+                printf("Interface: player-ul %d a ales pionul %d\n", C->player_index, chosen_pawn);
+
+                char move[100];
+                strcpy(move, std::to_string(chosen_pawn).c_str());
+
+                write(sockets[1], move, 100);
+            }
+            else if (last_char == '2') // must update the board
+            {
+                int p_index = sv_msg[0] - 48;
+                int pawn_nr = sv_msg[1] - 48;
+                int dice = sv_msg[2] - 48;
+
+                gameBoard->moveAndUpdatePawn(p_index, pawn_nr, dice);
             }
         }
-
-        window.clear(sf::Color(236, 233, 211));
-
-        if (exitScreen == true)
+    }
+    else
+    {
+        // child - client
+        while (1)
         {
-            break;
-        }
+            close(sockets[1]);
 
-        InfoText.display(window);
-        gameBoard->display(window);
-        window.display();
+            if (C->read_() == -1)
+            {
+                printf("S-a deconectat serverul");
+                break;
+            }
+
+            write(sockets[0], C->get_sv_msg(), 100); // trimite mesaj de la server pentru interfata
+
+            if (C->must_reply) // has to select pawn to move
+            {
+                char interface_msg[100];
+                read(sockets[0], interface_msg, 100); // asteapta sa primeasca mutare
+                printf("Client: pionul mutat este %c si o trimit la server\n", interface_msg[0]);
+
+                C->set_cl_msg(interface_msg);
+                C->write_();
+            }
+        }
     }
 }
 
@@ -282,13 +366,14 @@ void Interface::displayEndScreen()
 {
     Btn.updateText("Restart");
 }
+
 int main()
 {
     Interface *interface = new Interface(900.f, 900.f);
 
-    interface->displayFirstScreen();
+    interface->firstScreen();
 
-    interface->displayGameScreen();
+    interface->gameScreen();
 
     return 0;
 }

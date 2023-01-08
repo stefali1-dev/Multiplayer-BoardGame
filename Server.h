@@ -59,7 +59,7 @@ private:
 public:
     Server(/* args */);
     ~Server();
-    int selectLoop();
+    void selectLoop();
     int handleCommand(char *str);
     int sayHello(int fd);
     void gameLoop();

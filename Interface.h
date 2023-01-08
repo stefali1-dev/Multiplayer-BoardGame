@@ -128,11 +128,12 @@ public:
 class GraphicPawn
 {
 private:
+    float x, y;
     sf::Texture texture;
     sf::Sprite sprite;
 
 public:
-    GraphicPawn(sf::Color color)
+    GraphicPawn(sf::Color color) : x(0), y(0)
     {
         if (color == sf::Color::Blue)
         {
@@ -156,14 +157,23 @@ public:
         sprite.setScale(0.06, 0.06);
     }
 
-    void move(float x, float y)
+    void move(float pos_x, float pos_y)
     {
-        sprite.setPosition(26.3 + x, 73.f + y - 26.f);
+        this->x = pos_x + 26.3;
+        this->y = pos_y + 47.f;
+
+        sprite.setPosition(this->x, this->y);
     }
 
     void display(sf::RenderWindow &window)
     {
         window.draw(sprite);
+    }
+
+    bool isClicked(float mouse_x, float mouse_y)
+    {
+        return (mouse_x >= x && mouse_x <= x + sprite.getLocalBounds().width) &&
+               (mouse_y >= y && mouse_y <= y + sprite.getLocalBounds().height);
     }
 };
 
@@ -376,7 +386,7 @@ private:
                 color = sf::Color(9, 37, 149);
                 break;
             case 10:
-                color = sf::Color(210, 210, 16  );
+                color = sf::Color(210, 210, 16);
                 break;
             case 20:
                 color = sf::Color(29, 104, 22);
@@ -407,7 +417,7 @@ private:
         current = pathList->final[1];
         for (int i = 0; i < 4; i++)
         {
-            finalPaths[index++] = new BoardDot(current->x, current->y, sf::Color(210, 210, 16  ));
+            finalPaths[index++] = new BoardDot(current->x, current->y, sf::Color(210, 210, 16));
             current = current->next;
         }
 
@@ -432,7 +442,7 @@ private:
         current = pathList->base0[0];
         for (int i = 0; i < 4; i++)
         {
-            bases[index++] = new BoardDot(current->x, current->y, sf::Color(9, 37, 149 ));
+            bases[index++] = new BoardDot(current->x, current->y, sf::Color(9, 37, 149));
             current = current->next;
         }
 
@@ -440,7 +450,7 @@ private:
         current = pathList->base0[1];
         for (int i = 0; i < 4; i++)
         {
-            bases[index++] = new BoardDot(current->x, current->y, sf::Color(210, 210, 16  ));
+            bases[index++] = new BoardDot(current->x, current->y, sf::Color(210, 210, 16));
             current = current->next;
         }
 
@@ -519,7 +529,7 @@ public:
         int x = player[playerIndex]->getPawn(pawnNr)->x;
         int y = player[playerIndex]->getPawn(pawnNr)->y;
 
-        graphicPawn[4*playerIndex + pawnNr]->move(x, y);
+        graphicPawn[4 * playerIndex + pawnNr]->move(x, y);
     }
 
     void display(sf::RenderWindow &window)
@@ -540,6 +550,18 @@ public:
             graphicPawn[i]->display(window);
         }
     }
+
+    int clickedPawn(int player_index, float mouse_x, float mouse_y)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            if (graphicPawn[player_index * 4 + i]->isClicked(mouse_x, mouse_y))
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
 };
 
 class Interface
@@ -554,18 +576,22 @@ private:
     TextBox InfoText;
     InterfaceGameBoard *gameBoard;
 
-    char playerName[50];
-    char ip[50];
-    char port[50];
+    Client *C;
+
+    char playerName[100];
+    char ip[100];
+    char port[100];
 
     void generateBoard();
 
 public:
     Interface(float width, float height);
 
-    void displayFirstScreen();
+    void connect();
 
-    void displayGameScreen();
+    void firstScreen();
+
+    void gameScreen();
 
     void displayEndScreen();
 };

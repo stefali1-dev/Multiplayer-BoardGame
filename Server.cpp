@@ -88,6 +88,10 @@ int Server::writeToAllExcept(int playerIndex)
                 printf(" Eroare la write() catre client.\n");
                 return -1;
             }
+            else
+            {
+                printf("Am trimis tuturor fara %d mesajul: %s\n", playerIndex, sv_msg);
+            }
         }
     }
 
@@ -98,10 +102,14 @@ int Server::writeTo(int playerIndex)
 {
     addChar(sv_msg, '1');
 
-    if (write(dArr[playerIndex], sv_msg, sizeof(sv_msg)) < 0)
+    if (write(dArr[playerIndex], sv_msg, 100) < 0)
     {
         printf(" Eroare la write() catre client.\n");
         return -1;
+    }
+    else
+    {
+        printf("Am trimis lui %d mesajul: %s\n", playerIndex, sv_msg);
     }
     return 0;
 }
@@ -118,7 +126,7 @@ void Server::getClientName(int fd)
     names.push_back(cl_msg);
 }
 
-int Server::selectLoop()
+void Server::selectLoop()
 {
     while (1)
     {
@@ -127,7 +135,7 @@ int Server::selectLoop()
         if (select(nfds + 1, &readfds, NULL, NULL, &tv) < 0)
         {
             perror(" Eroare la select().\n");
-            return errno;
+            return;
         }
         if (FD_ISSET(sd, &readfds))
         {
@@ -149,6 +157,9 @@ int Server::selectLoop()
             fflush(stdout);
 
             getClientName(client);
+
+            strcpy(sv_msg, std::to_string(dArrIndex - 1).c_str()); // sending player number
+            writeTo(client);
         }
 
         // vedem daca e pregatit vreun socket client pentru a trimite numele
@@ -180,14 +191,15 @@ void Server::gameLoop()
         strcpy(sv_msg, str.c_str());
         writeTo(turn);
 
-        int *selectedPawn;
-        if (read(dArr[turn], &selectedPawn, sizeof(int)) < 0)
+        if (read(dArr[turn], cl_msg, 100) < 0)
         {
             perror("Eroare la read() de la client.\n");
             return;
         }
 
-        while (gameBoard->isValidPawnMove(turn, *selectedPawn, dice) == false)
+        int selectedPawn = cl_msg[0] - 48;
+
+        while (gameBoard->isValidPawnMove(turn, selectedPawn, dice) == false)
         {
             str = "Dice: " + std::to_string(dice) + "\nYou can't move that pawn -> select another pawn";
             strcpy(sv_msg, str.c_str());
@@ -200,11 +212,11 @@ void Server::gameLoop()
             }
         }
 
-        gameBoard->movePawn(turn, *selectedPawn, dice);
+        gameBoard->movePawn(turn, selectedPawn, dice);
         bool hasFinised = gameBoard->hasFinnished(turn);
 
         //       playerIndex                 pawnNr                         dice
-        str = std::to_string(turn) + std::to_string(*selectedPawn) + std::to_string(dice);
+        str = std::to_string(turn) + std::to_string(selectedPawn) + std::to_string(dice);
 
         //       hasFinnished(0 || 1)           2(format)
         str += std::to_string(hasFinised) + std::to_string(2);
