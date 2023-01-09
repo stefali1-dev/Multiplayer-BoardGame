@@ -23,8 +23,6 @@ private:
     sf::Text text;
 
 public:
-    Button();
-
     void create(float pos_x, float pos_y, float w, float h, sf::String text_);
 
     void display(sf::RenderWindow &window);
@@ -131,6 +129,7 @@ private:
     float x, y;
     sf::Texture texture;
     sf::Sprite sprite;
+    sf::RectangleShape rectangle;
 
 public:
     GraphicPawn(sf::Color color) : x(0), y(0)
@@ -155,6 +154,10 @@ public:
         texture.setSmooth(true);
         sprite.setTexture(texture);
         sprite.setScale(0.06, 0.06);
+
+        rectangle.setSize({0.06 * sprite.getLocalBounds().width, 0.06 * sprite.getLocalBounds().height});
+        rectangle.setOutlineColor(sf::Color::Black);
+        rectangle.setOutlineThickness(1);
     }
 
     void move(float pos_x, float pos_y)
@@ -163,17 +166,21 @@ public:
         this->y = pos_y + 47.f;
 
         sprite.setPosition(this->x, this->y);
+        rectangle.setPosition(this->x-3, this->y+4);
     }
 
     void display(sf::RenderWindow &window)
     {
         window.draw(sprite);
+        //window.draw(rectangle);
     }
 
     bool isClicked(float mouse_x, float mouse_y)
     {
-        return (mouse_x >= x && mouse_x <= x + sprite.getLocalBounds().width) &&
-               (mouse_y >= y && mouse_y <= y + sprite.getLocalBounds().height);
+        int rec_x = x - 3;
+        int rec_y = y + 4;
+        return (mouse_x >= rec_x && mouse_x <= rec_x + rectangle.getLocalBounds().width) &&
+               (mouse_y >= rec_y && mouse_y <= rec_y + rectangle.getLocalBounds().height);
     }
 };
 
@@ -564,6 +571,7 @@ public:
     }
 };
 
+
 class Interface
 {
 private:
@@ -584,12 +592,18 @@ private:
 
     void generateBoard();
 
+    void initializeClient()
+    {
+
+    }
+
 public:
+
     Interface(float width, float height);
 
-    void connect();
+    ~Interface();
 
-    void firstScreen();
+    int firstScreen();
 
     void gameScreen();
 

@@ -45,9 +45,9 @@ private:
     int turn;
 
     void getClientName(int fd);
-    bool gotAllNames()
+    bool allPlayersConnected()
     {
-        if (names.size() < NR_OF_PLAYERS)
+        if (dArrIndex < NR_OF_PLAYERS)
             return false;
         return true;
     }

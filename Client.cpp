@@ -1,8 +1,14 @@
 #include "Client.h"
 
+pthread_mutex_t lock;
+
 Client::Client() : connected(0), sv_msg(""), cl_msg(""), must_reply(false)
 {
-    // interface = new Interface(900.f, 900.f);
+    if (pthread_mutex_init(&lock, NULL) != 0)
+    {
+        printf("\n mutex init has failed\n");
+    }
+
 }
 
 Client::~Client()
@@ -44,10 +50,18 @@ int Client::connect_(const char *sv_adress, const char *input_port)
     }
     connected = true;
 
+    // initializing threads data
+    td0 = new thData();
+    td0->sd = sd;
+    td0->has_read = false;
+    
+    td1 = new thData();
+    td1->sd = sd;
+
     return 0;
 }
 
-char* Client::get_sv_msg()
+char *Client::get_sv_msg()
 {
     return this->sv_msg;
 }
@@ -87,7 +101,7 @@ int Client::read_()
     }
 
     strcpy(this->sv_msg, msg);
-    //printf("Server: %s\n", msg);
+    // printf("Server: %s\n", msg);
 
     return 0;
 }

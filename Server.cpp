@@ -122,7 +122,7 @@ void Server::getClientName(int fd)
     {
         perror("Eroare la read() de la client.\n");
     }
-
+    printf("S-a conectat jucatorul cu numele %s\n", cl_msg);
     names.push_back(cl_msg);
 }
 
@@ -153,19 +153,19 @@ void Server::selectLoop()
             FD_SET(client, &actfds);
             dArr[dArrIndex++] = client;
 
-            printf(" S-a conectat clientul cu descriptorul %d, de la adresa %s.\n", client, conv_addr(from));
+            //printf(" S-a conectat clientul cu descriptorul %d, de la adresa %s.\n", client, conv_addr(from));
             fflush(stdout);
 
-            getClientName(client);
+            // getClientName(client);
 
             strcpy(sv_msg, std::to_string(dArrIndex - 1).c_str()); // sending player number
             writeTo(client);
         }
 
         // vedem daca e pregatit vreun socket client pentru a trimite numele
-        if (gotAllNames())
+        if (allPlayersConnected())
         {
-            printf("Got all names\n");
+            printf("All players connected\n");
             strcpy(sv_msg, "All players connected");
             writeToAllExcept(-1);
 
@@ -180,7 +180,8 @@ void Server::gameLoop()
     std::string str;
     while (1)
     {
-        int dice = rand() % 6 + 1;
+        //int dice = rand() % 6 + 1;
+        int dice = 6;
 
         str = "Dice: " + std::to_string(dice) + "\nTurn: " + names[turn];
 
@@ -215,8 +216,8 @@ void Server::gameLoop()
         gameBoard->movePawn(turn, selectedPawn, dice);
         bool hasFinised = gameBoard->hasFinnished(turn);
 
-        //       playerIndex                 pawnNr                         dice
-        str = std::to_string(turn) + std::to_string(selectedPawn) + std::to_string(dice);
+        //       playerIndex                 pawnNr                         dice              turn
+        str = std::to_string(turn) + std::to_string(selectedPawn) + std::to_string(dice); 
 
         //       hasFinnished(0 || 1)           2(format)
         str += std::to_string(hasFinised) + std::to_string(2);

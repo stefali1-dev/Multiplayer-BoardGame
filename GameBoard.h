@@ -300,12 +300,13 @@ class GameBoard
 private:
     bool isFinished;
     bool allConnected;
-    int turn;
 
 public:
+    int turn;
+    int dice;
     PathList *pathList;
     Player *player[4];
-    GameBoard(/* args */) : isFinished(0), allConnected(0), turn(1)
+    GameBoard(/* args */) : isFinished(0), allConnected(0), turn(0), dice(-1)
     {
         pathList = new PathList();
 
