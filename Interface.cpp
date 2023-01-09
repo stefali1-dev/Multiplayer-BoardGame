@@ -7,13 +7,11 @@ void *read_func(void *arg) // FUNCTIA THREAD DE CITIRE MESAJ SERVER
     thData *tdL;
     tdL = ((thData *)arg);
 
-    if (read(tdL->sd, tdL->sv_msg, 100) < 0)
+    if (read(tdL->sd, tdL->info, sizeof(int)*5) < 0)
     {
         perror("[client]Eroare la read() de la server.\n");
     }
 
-    /* afisam mesajul primit */
-    printf("[client]Mesajul primit este: %s\n\n\n", tdL->sv_msg);
     tdL->has_read = true;
 
     pthread_mutex_unlock(&lock);
@@ -277,12 +275,12 @@ int Interface::firstScreen()
             //C->write_(); // sending player name
 
             
-            pthread_create(&C->th[0], NULL, &read_func, C->read_td);
+            pthread_create(&C->th[0], NULL, &read_func, C->td0);
 
             // waiting to read player index from server
             pthread_join(C->th[0], NULL);
 
-            C->player_index = (int)(C->read_td->sv_msg[0] - 48); // saving player index
+            C->player_index = (int)(C->td0->sv_msg[0] - 48); // saving player index
             printf("Player index: %d\n", C->player_index);
             return (C->player_index);
             break;
@@ -302,12 +300,14 @@ void Interface::gameScreen()
     // char s[30] = "INFO TEXT\nSECOND LINE";
     // InfoText.setText(s);
 
-    // pthread_create(&C->th[0], NULL, &read_func, C->read_td);
+    
 
     strcpy(ip, "0");
     strcpy(port, "2908");
 
     C->connect_(ip, port);
+
+    pthread_create(&C->th[0], NULL, &read_func, C->td0);
 
     while (window.isOpen())
     {
@@ -324,9 +324,9 @@ void Interface::gameScreen()
                     int chosen_pawn = gameBoard->clickedPawn(C->player_index, event.mouseButton.x, event.mouseButton.y);
                     if(chosen_pawn != -1)
                     {
-                        C->td0->chosen_pawn = chosen_pawn;
+                        C->td1->chosen_pawn = chosen_pawn;
                         printf("pawn: %d\n", chosen_pawn);
-                        pthread_create(&C->th[1], NULL, &write_func, C->td0);
+                        pthread_create(&C->th[1], NULL, &write_func, C->td1);
                     }
 
                 }
@@ -344,12 +344,30 @@ void Interface::gameScreen()
         gameBoard->display(window);
         window.display();
 
-        /*if (C->read_td->has_read)
+        if(C->td0->has_read)
         {
-            C->read_td->has_read = false;
+            int player_index = C->td0->info[0];
+            int chosen_pawn = C->td0->info[1];
+            int dice = C->td0->info[2];
+            bool has_finished = C->td0->info[3];
+            int turn = C->td0->info[4];
+
+            //printf("Informatie primita: player %d, pion %d, zar %d, a terminat? %d, randul lui %d \n\n\n", pl);
+
+            gameBoard->moveAndUpdatePawn(player_index, chosen_pawn, dice);
+
+            C->td0->has_read = false;
+
+            pthread_create(&C->th[0], NULL, &read_func, C->td0);
+        }
+        
+
+        /*if (C->td0->has_read)
+        {
+            C->td0->has_read = false;
 
             char msg[100];
-            strcpy(msg, C->read_td->sv_msg);
+            strcpy(msg, C->td0->sv_msg);
 
             char last_char = msg[strlen(msg) - 1];
 
@@ -381,10 +399,10 @@ void Interface::gameScreen()
 
                 printf("Interface: player-ul %d a ales pionul %d\n", C->player_index, chosen_pawn);
 
-                strcpy(C->write_td->cl_msg, std::to_string(chosen_pawn).c_str()); // stocam mesajul de trimis
+                strcpy(C->td1->cl_msg, std::to_string(chosen_pawn).c_str()); // stocam mesajul de trimis
 
                 // sending the move to the server with a thread
-                pthread_create(&C->th[1], NULL, &write_func, C->write_td);
+                pthread_create(&C->th[1], NULL, &write_func, C->td1);
             }
 
             if(last_char == '2'){
@@ -396,7 +414,7 @@ void Interface::gameScreen()
             gameBoard->moveAndUpdatePawn(p_index, pawn_nr, dice);
             }
 
-            pthread_create(&C->th[0], NULL, &read_func, C->read_td); // INCEPE IAR LISTEN-UL PENTRU CITIRE
+            pthread_create(&C->th[0], NULL, &read_func, C->td0); // INCEPE IAR LISTEN-UL PENTRU CITIRE
         }*/
         
 

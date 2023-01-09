@@ -304,6 +304,8 @@ private:
 public:
     int turn;
     int dice;
+    bool must_send_info[4];
+    int info[5];
     PathList *pathList;
     Player *player[4];
     GameBoard(/* args */) : isFinished(0), allConnected(0), turn(0), dice(-1)
@@ -312,6 +314,7 @@ public:
 
         for (int i = 0; i < 4; i++)
         {
+            must_send_info[i] = false;
             player[i] = new Player(i);
             player[i]->initializePawns(pathList);
         }

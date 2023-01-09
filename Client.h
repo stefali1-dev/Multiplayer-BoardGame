@@ -16,7 +16,7 @@ struct thData
 {
     int sd;
     bool has_read;
-    char sv_msg[100];
+    int info[5];
     int chosen_pawn;
 };
 
@@ -32,8 +32,9 @@ private:
     char cl_msg[100];
 
 public:
-    pthread_t th[2]; // Identificatorii thread-urilor de read si write
+    pthread_t th[100]; // Identificatorii thread-urilor de read si write
                      // 0 pentru citit; 1 pentru scris
+    int i = 0;
 
     thData *td0, *td1;
 

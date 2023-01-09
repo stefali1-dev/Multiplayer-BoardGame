@@ -23,11 +23,11 @@ pthread_mutex_t lock;
 struct thData
 {
     int idThread = -1; // id-ul thread-ului tinut in evidenta de acest program
-    int cl;       // descriptorul intors de accept
+    int cl;            // descriptorul intors de accept
     GameBoard *gameBoard;
     bool *must_send_info;
-    int info[4];
     pthread_t *th_arr;
+    int *i;
 };
 
 void citeste(void *arg)
@@ -44,42 +44,38 @@ void citeste(void *arg)
     printf("[Thread %d]Mesajul a fost receptionat...%d\n", tdL->idThread, chosen_pawn);
 
     pthread_mutex_lock(&lock);
-    if(tdL->idThread == tdL->gameBoard->turn) // verificam daca e randul jucatorului respectiv
+    if (tdL->idThread == tdL->gameBoard->turn) // verificam daca e randul jucatorului respectiv
     {
         int player_index = tdL->idThread;
-        //int dice = tdL->gameBoard->dice;
+        // int dice = tdL->gameBoard->dice;
         int dice = 6;
-        
-        if(tdL->gameBoard->isValidPawnMove(player_index, chosen_pawn, dice))
+
+        if (tdL->gameBoard->isValidPawnMove(player_index, chosen_pawn, dice))
         {
             tdL->gameBoard->movePawn(player_index, chosen_pawn, dice);
         }
-        
-        
 
-        //tdL->gameBoard->turn++;
-        
-        tdL->info[0] = player_index;
-        tdL->info[1] = chosen_pawn;
-        tdL->info[2] = dice;
-        tdL->info[3] = tdL->gameBoard->hasFinnished(player_index);
+        // tdL->gameBoard->turn++;
 
-        *tdL->must_send_info = true;
+        tdL->gameBoard->info[0] = player_index;
+        tdL->gameBoard->info[1] = chosen_pawn;
+        tdL->gameBoard->info[2] = dice;
+        tdL->gameBoard->info[3] = tdL->gameBoard->hasFinnished(player_index);
+        tdL->gameBoard->info[4] = tdL->gameBoard->turn;
 
+        for (int j = 0; j < *(tdL->i); j++) // trebuie sa trimitem info catre toti clientii conectati
+            tdL->gameBoard->must_send_info[j] = true;
     }
-    
 
     pthread_mutex_unlock(&lock);
-
 }
-/*void send_move(void *arg)
+/*static void *send_move(void *arg)
 {
     thData *tdL;
     tdL = ((thData *)arg);
 
     for(int i = 0; tdL->th_arr[i]->)
 }*/
-
 
 static void *treat(void *arg)
 {
@@ -92,9 +88,22 @@ static void *treat(void *arg)
         printf("[thread]- %d - Asteptam mesajul...\n", tdL->idThread);
         fflush(stdout);
         pthread_detach(pthread_self());
+        /*if (tdL->gameBoard->must_send_info[tdL->idThread] == true)
+        {
+            pthread_mutex_lock(&lock);
+            
+            if (write(tdL->cl, tdL->gameBoard->info, sizeof(int)*5) <= 0) // trimitem info
+            {
+                printf("[Thread %d]\n", tdL->idThread);
+                perror("Eroare la write() de la client.\n");
+            }
+
+            tdL->gameBoard->must_send_info[tdL->idThread] = false;
+
+            pthread_mutex_unlock(&lock);
+        }*/
+        
         citeste((thData *)arg);
-
-
     }
     /* am terminat cu acest client, inchidem conexiunea */
     close((intptr_t)arg);
@@ -109,7 +118,7 @@ private:
     int nr; // mesajul primit de trimis la client
     int sd; // descriptorul de socket
     int pid;
-    pthread_t th[4]; // Identificatorii thread-urilor
+    pthread_t th[999]; // Identificatorii thread-urilor
     int i = 0;
     bool *must_send_info;
 
@@ -191,6 +200,7 @@ public:
             td->gameBoard = gameBoard;
             td->must_send_info = must_send_info;
             td->th_arr = th;
+            td->i = &i;
 
             pthread_create(&th[i++], NULL, &treat, td);
         }
