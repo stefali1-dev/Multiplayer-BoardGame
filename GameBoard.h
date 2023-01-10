@@ -402,4 +402,9 @@ public:
 
         return true; // player[playerIndex] has won
     }
+
+    void restart()
+    {
+        
+    }
 };
