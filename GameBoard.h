@@ -2,8 +2,6 @@
 
 #include <stdio.h>
 
-#define NR_OF_PLAYERS 4
-
 struct PathNode
 {
     float x, y;
@@ -136,6 +134,7 @@ public:
     PathNode *base1[4]; // last node of each base
     PathNode *base0[4]; // first node of each base
     PathNode *final[4]; // first node of final paths
+    int dice = 6;
 
     PathList() : nodeCount(0)
     {
@@ -220,7 +219,7 @@ public:
         {
             if (dice < 6)
             {
-                printf("Iti trebuie 6 sa iesi din baza\n");
+                //printf("Iti trebuie 6 sa iesi din baza\n");
                 return false;
             }
 
@@ -267,7 +266,7 @@ public:
             if (current->playerPawn == playerIndex) // player already has a pawn there
                 isValid = false;
         }
-        printf("pion %d e valid? %d\n", pawnNr, isValid);
+        //printf("pion %d e valid? %d\n", pawnNr, isValid);
 
         return isValid;
     }
@@ -304,17 +303,14 @@ private:
 public:
     int turn;
     int dice;
-    bool must_send_info[4];
-    int info[5];
     PathList *pathList;
     Player *player[4];
-    GameBoard(/* args */) : isFinished(0), allConnected(0), turn(0), dice(-1)
+    GameBoard(/* args */) : isFinished(0), allConnected(0), turn(0), dice(6)
     {
         pathList = new PathList();
 
         for (int i = 0; i < 4; i++)
         {
-            must_send_info[i] = false;
             player[i] = new Player(i);
             player[i]->initializePawns(pathList);
         }
@@ -323,13 +319,23 @@ public:
     {
     }
 
-    void movePawn(int playerIndex, int pawnNr, int dice)
+    bool hasNoValidMoves(int player_index, int dice)
+    {
+        for(int i = 0; i < 4; i++)
+        {
+            if(isValidPawnMove(player_index, i, dice) == true)
+                return false;
+        }
+        return true;
+    }
+
+    void movePawn(int playerIndex, int pawnNr, int dice, int &pawn_colision, int &player_collision)
     {
         if (player[playerIndex]->getPawn(pawnNr)->isBase)
         {
             if (dice < 6)
             {
-                printf("Trebuie un 6 ca sa iesi din baza\n");
+                //printf("Trebuie un 6 ca sa iesi din baza\n");
                 return;
             }
             else
@@ -360,6 +366,9 @@ public:
 
                     if (player[i]->getPawn(j) == player[playerIndex]->getPawn(pawnNr)) // is pawn collision
                     {
+                        player_collision = i;
+                        pawn_colision = j;
+
                         player[i]->sendPawnToBase(j, pathList);
                         printf("Am trimis la baza pionul %d al playerului %d\n", j, i);
                     }
@@ -367,12 +376,11 @@ public:
             }
             else
             {
-                printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 0, player[playerIndex]->getPawn(0)->nodeIndex, player[playerIndex]->getPawn(0)->isBase);
-                printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 1, player[playerIndex]->getPawn(1)->nodeIndex, player[playerIndex]->getPawn(1)->isBase);
-                printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 2, player[playerIndex]->getPawn(2)->nodeIndex, player[playerIndex]->getPawn(2)->isBase);
-                printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 3, player[playerIndex]->getPawn(3)->nodeIndex, player[playerIndex]->getPawn(3)->isBase);
+                //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 0, player[playerIndex]->getPawn(0)->nodeIndex, player[playerIndex]->getPawn(0)->isBase);
+                //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 1, player[playerIndex]->getPawn(1)->nodeIndex, player[playerIndex]->getPawn(1)->isBase);
+                //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 2, player[playerIndex]->getPawn(2)->nodeIndex, player[playerIndex]->getPawn(2)->isBase);
+                //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 3, player[playerIndex]->getPawn(3)->nodeIndex, player[playerIndex]->getPawn(3)->isBase);
             }
-            printf("\n");
         }
     }
 

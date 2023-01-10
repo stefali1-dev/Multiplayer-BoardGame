@@ -78,26 +78,21 @@ private:
     }
 
 public:
-    TextBox(/* args */);
     void setText(char *str)
     {
         sf::String s = str;
 
-        text1 = s.substring(0, s.find("\n"));
-        text2 = s.substring(s.find("\n") + 1);
-
-        initialize(firstLine, 10.f, text1);
-        initialize(secondLine, 45.f, text2);
-
-        // printf("%f\n", (float)firstLine.getLocalBounds().height);
-        // printf("%f\n", (float)secondLine.getLocalBounds().height);
-
-        // std::cout<< static_cast<std::string>(text1) << "\n" << static_cast<std::string>(text2);
+        initialize(firstLine, 10.f, s);
     }
+
+    void updateText(char *str){
+        firstLine.setString(str);
+    }
+
     void display(sf::RenderWindow &window)
     {
         window.draw(firstLine);
-        window.draw(secondLine);
+        //window.draw(secondLine);
     }
 };
 
@@ -155,7 +150,7 @@ public:
         sprite.setTexture(texture);
         sprite.setScale(0.06, 0.06);
 
-        rectangle.setSize({0.06 * sprite.getLocalBounds().width, 0.06 * sprite.getLocalBounds().height});
+        rectangle.setSize({0.06f * sprite.getLocalBounds().width, 0.06f * sprite.getLocalBounds().height});
         rectangle.setOutlineColor(sf::Color::Black);
         rectangle.setOutlineThickness(1);
     }
@@ -172,7 +167,6 @@ public:
     void display(sf::RenderWindow &window)
     {
         window.draw(sprite);
-        //window.draw(rectangle);
     }
 
     bool isClicked(float mouse_x, float mouse_y)
@@ -531,7 +525,8 @@ public:
 
     void moveAndUpdatePawn(int playerIndex, int pawnNr, int dice)
     {
-        movePawn(playerIndex, pawnNr, dice);
+        int k; // dummy variable
+        movePawn(playerIndex, pawnNr, dice, k, k);
 
         int x = player[playerIndex]->getPawn(pawnNr)->x;
         int y = player[playerIndex]->getPawn(pawnNr)->y;
@@ -567,10 +562,9 @@ public:
                 return i;
             }
         }
-        return -1;
+        return -2;
     }
 };
-
 
 class Interface
 {
@@ -582,30 +576,36 @@ private:
     InputBox TextInputBox;
     Button Btn;
     TextBox InfoText;
-    InterfaceGameBoard *gameBoard;
 
     Client *C;
 
-    char playerName[100];
     char ip[100];
     char port[100];
 
-    void generateBoard();
-
-    void initializeClient()
-    {
-
-    }
 
 public:
+    InterfaceGameBoard *gameBoard;
 
     Interface(float width, float height);
 
-    ~Interface();
+    void updateStatusText(char *str)
+    {
+        InfoText.updateText(str);
+    }
 
     int firstScreen();
 
     void gameScreen();
 
     void displayEndScreen();
+};
+
+struct thData
+{
+    int sd;
+    bool has_read;
+    char sv_msg[100];
+    int info[7];
+    int chosen_pawn;
+    Interface *interface;
 };

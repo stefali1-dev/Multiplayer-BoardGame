@@ -2,25 +2,60 @@
 
 void *read_func(void *arg) // FUNCTIA THREAD DE CITIRE MESAJ SERVER
 {
-    pthread_mutex_lock(&lock);
     int nr;
     thData *tdL;
     tdL = ((thData *)arg);
 
-    if (read(tdL->sd, tdL->info, sizeof(int)*5) < 0)
+    while (1)
     {
-        perror("[client]Eroare la read() de la server.\n");
+        if (read(tdL->sd, tdL->info, sizeof(int) * 5) < 0)
+        {
+            perror("[client]Eroare la read() de la server.\n");
+        }
+        // tdL->info[0] player index
+        // tdL->info[1] pawn number
+        // tdL->info[2] dice
+        // tdL->info[3] has the player finished?
+        // tdL->info[4] player turn
+
+        // tdL->info[6] collided pawn, -1 if none
+        // tdL->info[6] player of collided pawn, -1 if none
+
+        if (tdL->info[1] != -1)
+        {
+            tdL->interface->gameBoard->moveAndUpdatePawn(tdL->info[0], tdL->info[1], tdL->interface->gameBoard->dice);
+
+            if (tdL->info[5] != -1) // pawn collision
+            {
+                PathList *pathList = tdL->interface->gameBoard->pathList;
+                tdL->interface->gameBoard->player[tdL->info[6]]->sendPawnToBase(tdL->info[5], pathList);
+            }
+        }
+
+        tdL->interface->gameBoard->dice = tdL->info[2];
+
+        char str[100];
+        char nr[2];
+        nr[1] = '\0';
+        strcpy(str, "Player x has moved - Turn: player   -  Dice:  ");
+
+        if(tdL->info[0] < 0 || tdL->info[0] > 3)
+            str[7] = 0 + 48;
+
+        else
+            str[7] = tdL->info[0] + 48;
+
+        str[34] = tdL->info[4] + 48;
+        str[44] = tdL->info[2] + 48;
+
+        tdL->interface->updateStatusText(str);
     }
 
-    tdL->has_read = true;
-
-    pthread_mutex_unlock(&lock);
     return (NULL);
 };
 
 void *write_func(void *arg) // FUNCTIA THREAD DE TRIMITERE MESAJ CATRE SERVER
 {
-    pthread_mutex_lock(&lock);
     thData *tdL;
     tdL = ((thData *)arg);
 
@@ -31,7 +66,6 @@ void *write_func(void *arg) // FUNCTIA THREAD DE TRIMITERE MESAJ CATRE SERVER
         return (NULL);
     }
     printf("Pionul ales este: %d\n\n\n", tdL->chosen_pawn);
-    pthread_mutex_unlock(&lock);
     return (NULL);
 };
 
@@ -144,13 +178,6 @@ void InputBox::display(sf::RenderWindow &window)
     inputText.setString(input);
     window.draw(inputText);
 }
-TextBox::TextBox()
-{
-}
-
-void Interface::generateBoard()
-{
-}
 
 Interface::Interface(float width, float height) : menuOrder(0)
 {
@@ -165,13 +192,12 @@ Interface::Interface(float width, float height) : menuOrder(0)
     TextInputBox.create((width - 500) / 2, height / 3, 500, 65, "Server IP");
     Btn.create((width - 200) / 2, height / 1.8, 200, 100, "Submit");
     gameBoard = new InterfaceGameBoard();
+
+    char s[40] = "First move - Turn: player 0 - Dice: 6";
+    InfoText.setText(s);
 }
 
-Interface::~Interface()
-{
-}
 
-/*
 int Interface::firstScreen()
 {
     bool exitScreen = false;
@@ -226,10 +252,6 @@ int Interface::firstScreen()
                             // port input
                             strcpy(port, inputText);
                             break;
-                        case 2:
-                            // name input
-                            strcpy(playerName, inputText);
-                            break;
                         }
 
                         // std::cout << inputText << std::endl;
@@ -242,22 +264,18 @@ int Interface::firstScreen()
                             switch (menuOrder)
                             {
                             case 0:
-                                // name input
+                                // ip input
                                 TextInputBox.updateInfo("Server Port");
                                 break;
                             case 1:
-                                // ip input
-                                TextInputBox.updateInfo("Player Name");
-                                break;
-                            case 2:
-                                // ip input
+                                // port input
                                 break;
                             }
 
                             TextInputBox.display(window);
 
                             menuOrder++;
-                            if (menuOrder > 2)
+                            if (menuOrder > 1)
                                 exitScreen = true;
                         }
                     }
@@ -270,19 +288,6 @@ int Interface::firstScreen()
         if (exitScreen == true)
         {
             C->connect_(ip, port);
-
-            //C->set_cl_msg(playerName);
-            //C->write_(); // sending player name
-
-            
-            pthread_create(&C->th[0], NULL, &read_func, C->td0);
-
-            // waiting to read player index from server
-            pthread_join(C->th[0], NULL);
-
-            C->player_index = (int)(C->td0->sv_msg[0] - 48); // saving player index
-            printf("Player index: %d\n", C->player_index);
-            return (C->player_index);
             break;
         }
 
@@ -292,22 +297,33 @@ int Interface::firstScreen()
     }
     return 0;
 }
-*/
+
 
 void Interface::gameScreen()
 {
     bool exitScreen = false;
-    // char s[30] = "INFO TEXT\nSECOND LINE";
-    // InfoText.setText(s);
 
-    
+    pthread_t th[2]; // Identificatorii thread-urilor de read si write
+                     // 0 pentru citit; 1 pentru scris
 
-    strcpy(ip, "0");
-    strcpy(port, "2908");
+    thData *td0, *td1;
 
-    C->connect_(ip, port);
+    // initializing threads data
+    td0 = new thData();
+    td0->sd = C->sd;
+    td0->interface = this;
 
-    pthread_create(&C->th[0], NULL, &read_func, C->td0);
+    td1 = new thData();
+    td1->sd = C->sd;
+
+    if (read(C->sd, &C->player_index, sizeof(int)) <= 0) // primim numarul jucatorului
+    {
+        perror("[client]Eroare la write() spre server.\n");
+        return;
+    }
+    printf("Suntem jucatorul cu numarul: %d\n", C->player_index);
+
+    pthread_create(&th[0], NULL, &read_func, td0);
 
     while (window.isOpen())
     {
@@ -315,20 +331,30 @@ void Interface::gameScreen()
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
+            {
                 window.close();
+                close(C->sd);
+            }
 
             if (event.type == sf::Event::MouseButtonPressed)
             {
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
                     int chosen_pawn = gameBoard->clickedPawn(C->player_index, event.mouseButton.x, event.mouseButton.y);
-                    if(chosen_pawn != -1)
-                    {
-                        C->td1->chosen_pawn = chosen_pawn;
-                        printf("pawn: %d\n", chosen_pawn);
-                        pthread_create(&C->th[1], NULL, &write_func, C->td1);
-                    }
+                    printf("Dice: %d\n", gameBoard->dice);
 
+                    if (chosen_pawn != -2)
+                    {
+                        if (gameBoard->hasNoValidMoves(C->player_index, gameBoard->dice))
+                        {
+                            td1->chosen_pawn = -1;
+                        }
+                        else if (gameBoard->isValidPawnMove(C->player_index, chosen_pawn, gameBoard->dice))
+                        {
+                            td1->chosen_pawn = chosen_pawn;
+                        }
+                        pthread_create(&th[1], NULL, &write_func, td1);
+                    }
                 }
             }
         }
@@ -343,84 +369,8 @@ void Interface::gameScreen()
         InfoText.display(window);
         gameBoard->display(window);
         window.display();
-
-        if(C->td0->has_read)
-        {
-            int player_index = C->td0->info[0];
-            int chosen_pawn = C->td0->info[1];
-            int dice = C->td0->info[2];
-            bool has_finished = C->td0->info[3];
-            int turn = C->td0->info[4];
-
-            //printf("Informatie primita: player %d, pion %d, zar %d, a terminat? %d, randul lui %d \n\n\n", pl);
-
-            gameBoard->moveAndUpdatePawn(player_index, chosen_pawn, dice);
-
-            C->td0->has_read = false;
-
-            pthread_create(&C->th[0], NULL, &read_func, C->td0);
-        }
-        
-
-        /*if (C->td0->has_read)
-        {
-            C->td0->has_read = false;
-
-            char msg[100];
-            strcpy(msg, C->td0->sv_msg);
-
-            char last_char = msg[strlen(msg) - 1];
-
-            if (last_char == '0')
-            {
-                InfoText.setText(msg);
-            }
-            if (last_char == '1')
-            {
-                InfoText.setText(msg);
-                int chosen_pawn = -1;
-
-                while (chosen_pawn == -1)
-                {
-                    while (window.pollEvent(event))
-                    {
-                        if (event.type == sf::Event::Closed)
-                            window.close();
-                        if (event.type == sf::Event::MouseButtonPressed)
-                        {
-                            if (event.mouseButton.button == sf::Mouse::Left)
-                            {
-                                // gameBoard->moveAndUpdatePawn(0, 0, 6);
-                                chosen_pawn = gameBoard->clickedPawn(C->player_index, event.mouseButton.x, event.mouseButton.y);
-                            }
-                        }
-                    }
-                }
-
-                printf("Interface: player-ul %d a ales pionul %d\n", C->player_index, chosen_pawn);
-
-                strcpy(C->td1->cl_msg, std::to_string(chosen_pawn).c_str()); // stocam mesajul de trimis
-
-                // sending the move to the server with a thread
-                pthread_create(&C->th[1], NULL, &write_func, C->td1);
-            }
-
-            if(last_char == '2'){
-            // must update the board
-            int p_index = msg[0] - 48;
-            int pawn_nr = msg[1] - 48;
-            int dice = msg[2] - 48;
-
-            gameBoard->moveAndUpdatePawn(p_index, pawn_nr, dice);
-            }
-
-            pthread_create(&C->th[0], NULL, &read_func, C->td0); // INCEPE IAR LISTEN-UL PENTRU CITIRE
-        }*/
-        
-
     }
 }
-
 
 void Interface::displayEndScreen()
 {
@@ -431,7 +381,7 @@ int main()
 {
     Interface *interface = new Interface(900.f, 900.f);
 
-    //nterface->firstScreen();
+    interface->firstScreen();
 
     interface->gameScreen();
 
