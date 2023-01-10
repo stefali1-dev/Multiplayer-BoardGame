@@ -376,10 +376,10 @@ public:
             }
             else
             {
-                //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 0, player[playerIndex]->getPawn(0)->nodeIndex, player[playerIndex]->getPawn(0)->isBase);
-                //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 1, player[playerIndex]->getPawn(1)->nodeIndex, player[playerIndex]->getPawn(1)->isBase);
-                //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 2, player[playerIndex]->getPawn(2)->nodeIndex, player[playerIndex]->getPawn(2)->isBase);
-                //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 3, player[playerIndex]->getPawn(3)->nodeIndex, player[playerIndex]->getPawn(3)->isBase);
+                printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 0, player[playerIndex]->getPawn(0)->nodeIndex, player[playerIndex]->getPawn(0)->isBase);
+                printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 1, player[playerIndex]->getPawn(1)->nodeIndex, player[playerIndex]->getPawn(1)->isBase);
+                printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 2, player[playerIndex]->getPawn(2)->nodeIndex, player[playerIndex]->getPawn(2)->isBase);
+                printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 3, player[playerIndex]->getPawn(3)->nodeIndex, player[playerIndex]->getPawn(3)->isBase);
             }
         }
     }

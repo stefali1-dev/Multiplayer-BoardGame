@@ -212,7 +212,7 @@ void Interface::gameScreen()
         perror("[client]Eroare la write() spre server.\n");
         return;
     }
-    printf("Suntem jucatorul cu numarul: %d\n", C->player_index);
+    printf("PLAYER NUMBER: %d\n", C->player_index);
 
     pthread_create(&th[0], NULL, &read_func, td0);
 

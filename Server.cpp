@@ -17,18 +17,17 @@
 
 #define PORT 2908
 #define MAX_NR_OF_PLAYERS 4
-/* codul de eroare returnat de anumite apeluri */
-pthread_mutex_t lock;
 
 struct thData
 {
     int idThread = -1; // id-ul thread-ului tinut in evidenta de acest program
     int cl;            // descriptorul intors de accept
     GameBoard *gameBoard;
-    int info[7];
-    int *thread_count;
-    int *cl_arr;
-    int *game_score;
+    int info[7]; // informatiile de trimis catre clienti
+
+    int *thread_count; // numarul de clienti
+    int *cl_arr; // array cu drescriptorii de clienti
+    int *game_score; // arey cu scorurile jucatorilor
 };
 
 void citeste(void *arg)
@@ -46,7 +45,6 @@ void citeste(void *arg)
 
     printf("Jucator %d : mutare receptionata: %d\n", tdL->idThread, chosen_pawn);
 
-    pthread_mutex_lock(&lock);
     if (tdL->idThread == tdL->gameBoard->turn) // verificam daca e randul jucatorului respectiv
     {
         int player_index = tdL->idThread;
@@ -123,12 +121,12 @@ void citeste(void *arg)
         }
     }
 
-    pthread_mutex_unlock(&lock);
+    
 }
 
 static void *treat(void *arg)
 {
-
+    
     thData *tdL;
     tdL = ((thData *)arg);
 
@@ -145,6 +143,7 @@ static void *treat(void *arg)
     }
     /* am terminat cu acest client, inchidem conexiunea */
     close((intptr_t)arg);
+    
     return (NULL);
 };
 
@@ -171,9 +170,6 @@ public:
         i = 0;
         thread_count = &i;
         gameBoard = new GameBoard();
-
-        pthread_mutex_init(&lock, NULL);
-
         FILE *fp;
         char *line = NULL;
         size_t len = 0;
