@@ -1,4 +1,4 @@
-# LUDO-Multiplayer
+# Multiplayer-BoardGame
 
 
 ## Info
@@ -29,5 +29,4 @@ The binary files are named **client-app** and **server-app**, therefore you can 
 
 
 ## Screenshots
-
-
+![screenshot](https://raw.githubusercontent.com/stefali1-dev/NTSF/main/src/schrenshot.png?token=GHSAT0AAAAAAB4I7F5HLTHEHN6W7YFMGAI2Y56VDEQ)
