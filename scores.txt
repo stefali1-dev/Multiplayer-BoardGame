@@ -1,4 +1,0 @@
-player 0 : 0
-player 1 : 0
-player 2 : 0
-player 3 : 0

@@ -1,2 +1,0 @@
-pentru compilare server: g++ Server.cpp -o server
-pentru compilare client: g++ Interface.cpp -o client -lsfml-graphics -lsfml-window -lsfml-system
