@@ -29,4 +29,4 @@ The binary files are named **client-app** and **server-app**, therefore you can 
 
 
 ## Screenshot
-![screenshot](https://raw.githubusercontent.com/stefali1-dev/NTSF/main/src/schrenshot.png?token=GHSAT0AAAAAAB4I7F5HLTHEHN6W7YFMGAI2Y56VDEQ)
+![screenshot](https://raw.githubusercontent.com/stefali1-dev/Multiplayer-BoardGame/main/src/schrenshot.png?token=GHSAT0AAAAAAB4I7F5G3HTBFPGA46KP4S26Y57B2RA)
