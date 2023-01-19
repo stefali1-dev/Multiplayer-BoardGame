@@ -11,7 +11,7 @@ This project consists of two separate applications: Server and Client that commu
 - it's PORT is `2908`
 
 #### The Client:
-- has an interactive graphic interface that registeres moves and displays the gameboard, made with `SFML 2.5.1`
+- has an interactive graphic interface that registers moves and displays the gameboard, made with `SFML 2.5.1`
 
 
 If a Client wants to connect to a Server that is run on the same machine, the `IP-adress` can be set to `0`.
