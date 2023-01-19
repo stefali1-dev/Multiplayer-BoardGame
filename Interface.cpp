@@ -1,6 +1,6 @@
 #include "Interface.h"
 
-void *read_func(void *arg) // FUNCTIA THREAD DE CITIRE MESAJ SERVER
+void *read_func(void *arg) // thread function to read from server
 {
     int nr;
     thData *tdL;
@@ -10,7 +10,8 @@ void *read_func(void *arg) // FUNCTIA THREAD DE CITIRE MESAJ SERVER
     {
         if (read(tdL->sd, tdL->info, sizeof(int) * 5) < 0)
         {
-            perror("[client]Eroare la read() de la server.\n");
+            printf("Error at read() from server.\n");
+            return (NULL);
         }
         // tdL->info[0] player index
         // tdL->info[1] pawn number
@@ -54,15 +55,15 @@ void *read_func(void *arg) // FUNCTIA THREAD DE CITIRE MESAJ SERVER
     return (NULL);
 };
 
-void *write_func(void *arg) // FUNCTIA THREAD DE TRIMITERE MESAJ CATRE SERVER
+void *write_func(void *arg) // thread function to write to server
 {
     thData *tdL;
     tdL = ((thData *)arg);
 
-    /* trimiterea mesajului la server */
+    // trimiterea mesajului la server 
     if (write(tdL->sd, &tdL->chosen_pawn, sizeof(int)) <= 0)
     {
-        perror("[client]Eroare la write() spre server.\n");
+        printf("Error at write() from server.\n");
         return (NULL);
     }
     printf("Chosen pawn: %d\n\n\n", tdL->chosen_pawn);
@@ -601,7 +602,7 @@ void InterfaceGameBoard::initPawns()
     }
 }
 
-InterfaceGameBoard::InterfaceGameBoard(/* args */)
+InterfaceGameBoard::InterfaceGameBoard()
 {
     setCoord();
     initBoard();
@@ -652,27 +653,24 @@ int InterfaceGameBoard::clickedPawn(int player_index, float mouse_x, float mouse
 
 int Client::connect_(const char *sv_adress, const char *input_port)
 {
-    /* stabilim portul */
+    // setting port
     port = atoi(input_port);
 
-    /* cream socketul */
+    // creating socket 
     if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         printf("Eroare la socket().\n");
         return -1;
     }
 
-    /* umplem structura folosita pentru realizarea conexiunii cu serverul */
-    /* familia socket-ului */
+    // filling server struct
     server.sin_family = AF_INET;
-    /* adresa IP a serverului */
     server.sin_addr.s_addr = inet_addr(sv_adress);
-    /* portul de conectare */
     server.sin_port = htons(port);
 
     if (connect(sd, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1)
     {
-        printf("Eroare la connect().\n");
+        printf("Error at connect()\n");
         return -1;
     }
 
@@ -768,8 +766,6 @@ int Interface::firstScreen()
                             break;
                         }
 
-                        // std::cout << inputText << std::endl;
-
                         if (inputText != NULL)
                         {
                             window.clear(sf::Color(236, 233, 211));
@@ -816,8 +812,8 @@ void Interface::gameScreen()
 {
     bool exitScreen = false;
 
-    pthread_t th[2]; // Identificatorii thread-urilor de read si write
-                     // 0 pentru citit; 1 pentru scris
+    pthread_t th[2]; // Thread identifiers for read and write
+                     // 0 for read; 1 for write
 
     thData *td0, *td1;
 
@@ -829,9 +825,9 @@ void Interface::gameScreen()
     td1 = new thData();
     td1->sd = C->sd;
 
-    if (read(C->sd, &C->player_index, sizeof(int)) <= 0) // primim numarul jucatorului
+    if (read(C->sd, &C->player_index, sizeof(int)) <= 0) // receiving player number
     {
-        perror("[client]Eroare la write() spre server.\n");
+        perror("Error at write() to server\n");
         return;
     }
     printf("YOUR PLAYER NUMBER: %d\n", C->player_index);

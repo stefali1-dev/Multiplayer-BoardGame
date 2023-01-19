@@ -135,8 +135,6 @@ void Player::initializePawns(PathList *pathList)
     PathNode *current = pathList->base0[playerIndex];
     for (int i = 0; i < 4; i++)
     {
-        // pawn[i]->pawnCount[i]++;
-
         pawn[i] = current;
         pawn[i]->playerPawn = playerIndex;
         current = current->next;
@@ -145,7 +143,6 @@ void Player::initializePawns(PathList *pathList)
 
 void Player::movePawn(int pawnNr, int count, PathList *pathList)
 {
-    // pawn[pawnNr]->pawnCount[playerIndex]--;
     pawn[pawnNr]->playerPawn = -1;
 
     while (count)
@@ -153,7 +150,6 @@ void Player::movePawn(int pawnNr, int count, PathList *pathList)
 
         if (pawn[pawnNr]->nextFinal == pathList->final[playerIndex])
         {
-            //printf("Pionul %d a ajuns la final nodes\n", pawnNr);
             pawn[pawnNr] = pawn[pawnNr]->nextFinal;
         }
         else
@@ -164,9 +160,7 @@ void Player::movePawn(int pawnNr, int count, PathList *pathList)
         count--;
     }
 
-    //printf("Am terminat de mutat pionul %d al playerului %d\n", pawnNr, playerIndex);
-
-    // pawn[pawnNr]->pawnCount[playerIndex]++;
+    //printf("Finished moving pawn %d of player %d\n", pawnNr, playerIndex);
     pawn[pawnNr]->playerPawn = playerIndex;
 }
 
@@ -184,7 +178,7 @@ bool Player::isValidMove(int dice, int pawnNr, PathList *pathList)
     {
         if (dice < 6)
         {
-            // printf("Iti trebuie 6 sa iesi din baza\n");
+            // printf("You need a 6 to get out of the base\n");
             return false;
         }
 
@@ -231,14 +225,12 @@ bool Player::isValidMove(int dice, int pawnNr, PathList *pathList)
         if (current->playerPawn == playerIndex) // player already has a pawn there
             isValid = false;
     }
-    // printf("pion %d e valid? %d\n", pawnNr, isValid);
 
     return isValid;
 }
 
 void Player::sendPawnToBase(int pawnNr, PathList *pathList)
 {
-    // pawn[pawnNr]->pawnCount[playerIndex]--;
     pawn[pawnNr]->playerPawn = -1;
 
     PathNode *current = pathList->base0[playerIndex];
@@ -258,7 +250,7 @@ PathNode *Player::getPawn(int nr)
     return pawn[nr];
 }
 
-GameBoard::GameBoard(/* args */) : isFinished(0), allConnected(0), turn(0), dice(6)
+GameBoard::GameBoard() : isFinished(0), turn(0), dice(6)
 {
     pathList = new PathList();
 
@@ -285,7 +277,7 @@ void GameBoard::movePawn(int playerIndex, int pawnNr, int dice, int &pawn_colisi
     {
         if (dice < 6)
         {
-            // printf("Trebuie un 6 ca sa iesi din baza\n");
+            // printf("You need a 6 to get out of the base\n");
             return;
         }
         else
@@ -295,7 +287,7 @@ void GameBoard::movePawn(int playerIndex, int pawnNr, int dice, int &pawn_colisi
                 player[playerIndex]->moveToCheckpoint(pawnNr, pathList);
             }
             else
-                printf("Nu poti muta pionul ala\n");
+                printf("You can't move that pawn\n");
         }
     }
     else
@@ -326,10 +318,10 @@ void GameBoard::movePawn(int playerIndex, int pawnNr, int dice, int &pawn_colisi
         }
         else
         {
-            //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 0, player[playerIndex]->getPawn(0)->nodeIndex, player[playerIndex]->getPawn(0)->isBase);
-            //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 1, player[playerIndex]->getPawn(1)->nodeIndex, player[playerIndex]->getPawn(1)->isBase);
-            //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 2, player[playerIndex]->getPawn(2)->nodeIndex, player[playerIndex]->getPawn(2)->isBase);
-            //printf("player %d, pion %d, pozitia %d, baza? %d\n", i, 3, player[playerIndex]->getPawn(3)->nodeIndex, player[playerIndex]->getPawn(3)->isBase);
+            //printf("player %d, pion %d, position %d, base? %d\n", i, 0, player[playerIndex]->getPawn(0)->nodeIndex, player[playerIndex]->getPawn(0)->isBase);
+            //printf("player %d, pion %d, position %d, base? %d\n", i, 1, player[playerIndex]->getPawn(1)->nodeIndex, player[playerIndex]->getPawn(1)->isBase);
+            //printf("player %d, pion %d, position %d, base? %d\n", i, 2, player[playerIndex]->getPawn(2)->nodeIndex, player[playerIndex]->getPawn(2)->isBase);
+            //printf("player %d, pion %d, position %d, base? %d\n", i, 3, player[playerIndex]->getPawn(3)->nodeIndex, player[playerIndex]->getPawn(3)->isBase);
         }
     }
 }

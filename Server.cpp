@@ -1,11 +1,11 @@
 #include "Server.h"
 
-void citeste(void *arg)
+void read_(void *arg)
 {
     int chosen_pawn;
     thData *tdL;
     tdL = ((thData *)arg);
-    if (read(tdL->cl, &chosen_pawn, sizeof(int)) <= 0) // primim pionul ales de jucator
+    if (read(tdL->cl, &chosen_pawn, sizeof(int)) <= 0) // receiving chosen pawn from the player
     {
         printf("Player %d has disconnected\n", tdL->idThread);
         tdL->thread_count--;
@@ -15,7 +15,7 @@ void citeste(void *arg)
 
     printf("Player %d : chosen pawn: %d\n", tdL->idThread, chosen_pawn);
 
-    if (tdL->idThread == tdL->gameBoard->turn) // verificam daca e randul jucatorului respectiv
+    if (tdL->idThread == tdL->gameBoard->turn) // checking player turn
     {
         int player_index = tdL->idThread;
         int pawn_collision = -1, player_collision = -1;
@@ -40,14 +40,12 @@ void citeste(void *arg)
         tdL->info[5] = pawn_collision;
         tdL->info[6] = player_collision;
 
-        // printf("\n\n%d\n\n", *tdL->thread_count);
-
-        for (int i = 0; i < *tdL->thread_count; i++)
+        for (int k = 0; k < *tdL->thread_count; k++)
         {
 
-            if (write(tdL->cl_arr[i], tdL->info, sizeof(int) * 7) <= 0)
+            if (write(tdL->cl_arr[k], tdL->info, sizeof(int) * 7) <= 0)
             {
-                perror("[client]Eroare la write() spre server.\n");
+                perror("Error at write() to client.\n");
                 return;
             }
         }
@@ -68,16 +66,17 @@ static void *treat(void *arg)
 
     if (write(tdL->cl, &tdL->idThread, sizeof(int)) <= 0) // trimitem numarul jucatorului
     {
-        perror("[client]Eroare la write() spre server.\n");
+        perror("Error at write() to client\n");
     }
 
     while (1)
     {
         fflush(stdout);
         pthread_detach(pthread_self());
-        citeste((thData *)arg);
+        read_((thData *)arg);
     }
-    /* am terminat cu acest client, inchidem conexiunea */
+
+    // closing connection to this client
     close((intptr_t)arg);
 
     return (NULL);
@@ -90,29 +89,27 @@ int Server::initialize()
 
     gameBoard = new GameBoard();
 
-    /* crearea unui socket */
+    // socket creation
     if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        perror("[server]Eroare la socket().\n");
+        perror("socket() error\n");
         return -1;
     }
-    /* utilizarea optiunii SO_REUSEADDR */
+
+    // utilising SO_REUSEADDR option
     int on = 1;
     setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
-    /* pregatirea structurilor de date */
+    // data structures preparation
     bzero(&server, sizeof(server));
     bzero(&from, sizeof(from));
 
-    /* umplem structura folosita de server */
-    /* stabilirea familiei de socket-uri */
+    // filling server struct 
     server.sin_family = AF_INET;
-    /* acceptam orice adresa */
     server.sin_addr.s_addr = htonl(INADDR_ANY);
-    /* utilizam un port utilizator */
     server.sin_port = htons(PORT);
 
-    /* atasam socketul */
+    // attaching socket
     if (bind(sd, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1)
     {
         perror("[server]Eroare la bind().\n");
@@ -123,30 +120,30 @@ int Server::initialize()
 
 int Server::acceptLoop()
 {
-    /* punem serverul sa asculte daca vin clienti sa se conecteze */
     if (listen(sd, 4) == -1)
     {
         perror("[server]Eroare la listen().\n");
         return -1;
     }
-    /* servim in mod concurent clientii...folosind thread-uri */
+
+    // serving clients using threads
     while (1)
     {
         int client;
-        thData *td; // parametru functia executata de thread
+        thData *td; // to be given as parameter for the thread function
         socklen_t length = sizeof(from);
 
         printf("Waiting on port %d...\n", PORT);
         fflush(stdout);
 
-        /* acceptam un client (stare blocanta pina la realizarea conexiunii) */
+        // accepting a client (blocking state)
         if ((client = accept(sd, (struct sockaddr *)&from, &length)) < 0)
         {
-            perror("[server]Eroare la accept().\n");
+            perror("Error at accept().\n");
             continue;
         }
 
-        /* s-a realizat conexiunea, se astepta mesajul */
+        // connection made
         td = new thData();
         td->idThread = i;
         td->cl = client;

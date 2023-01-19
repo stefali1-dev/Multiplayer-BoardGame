@@ -68,7 +68,6 @@ public:
 class TextBox
 {
 private:
-    /* data */
     sf::Text firstLine;
     sf::Text secondLine;
     sf::String text1, text2;
@@ -85,7 +84,6 @@ public:
 class BoardDot
 {
 private:
-    /* data */
     sf::CircleShape circle;
 
 public:
@@ -128,7 +126,7 @@ private:
     void initPawns();
 
 public:
-    InterfaceGameBoard(/* args */);
+    InterfaceGameBoard();
 
     void moveAndUpdatePawn(int playerIndex, int pawnNr, int dice);
     
@@ -142,9 +140,8 @@ public:
 class Client
 {
 private:
-    /* data */
     int port;
-    // descriptorul de socket
+    // server struct
     struct sockaddr_in server; // structura folosita pentru conectare
 public:
     int sd;
@@ -156,7 +153,6 @@ public:
 class Interface
 {
 private:
-    /* data */
     int menuOrder;
     sf::RenderWindow window;
 

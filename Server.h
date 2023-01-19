@@ -20,13 +20,13 @@
 
 struct thData
 {
-    int idThread = -1; // id-ul thread-ului tinut in evidenta de acest program
-    int cl;            // descriptorul intors de accept
+    int idThread = -1; // thread id, for each client
+    int cl;            // client descriptor
     GameBoard *gameBoard;
-    int info[7]; // informatiile de trimis catre clienti
+    int info[7]; // information to send to the clients
 
-    int *thread_count; // numarul de clienti
-    int *cl_arr; // array cu drescriptorii de clienti
+    int *thread_count; // numbers of threads/clients
+    int *cl_arr; // array with the clients' descriptors
 };
 
 void citeste(void *arg);
@@ -36,12 +36,11 @@ static void *treat(void *arg);
 class Server
 {
 private:
-    struct sockaddr_in server; // structura folosita de server
+    struct sockaddr_in server; // server struct
     struct sockaddr_in from;
-    int nr; // mesajul primit de trimis la client
-    int sd; // descriptorul de socket
+    int sd; // socket descriptor
     int pid;
-    pthread_t th[4]; // Identificatorii thread-urilor
+    pthread_t th[4]; // thread identifiers
 
     GameBoard *gameBoard;
 

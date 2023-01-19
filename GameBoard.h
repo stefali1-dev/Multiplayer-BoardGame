@@ -70,7 +70,6 @@ class GameBoard
 {
 private:
     bool isFinished;
-    bool allConnected;
 
 public:
     int turn;
