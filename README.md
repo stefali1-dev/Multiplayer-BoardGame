@@ -2,21 +2,25 @@
 
 
 ## Info
-This project consists of a Server that allows clients (maximum 4 simultaneously) to play competitively the game [Don't Get Mad Bro](https://en.wikipedia.org/wiki/Mensch_%C3%A4rgere_Dich_nicht), which is similar to [Ludo](https://en.wikipedia.org/wiki/Ludo).
 
-The Server is TCP Concurrent and handles multiple clients in parallel using Threads.
+This project consists of two separate applications: Server and Client that communicate using POSIX Sockets.
+
+#### The Server:
+- allows Clients (maximum 4 simultaneously) to competitively play the game [Don't Get Mad Bro](https://en.wikipedia.org/wiki/Mensch_%C3%A4rgere_Dich_nicht), which is similar to [Ludo](https://en.wikipedia.org/wiki/Ludo).
+- is TCP Concurrent and handles multiple Clients in parallel using POSIX Threads.
+- it's PORT is `2908`
+
+#### The Client:
+- has an interactive graphic interface that registeres moves and displays the gameboard, made with `SFML 2.5.1`
 
 
-SFML 2.5.1 has been used for the client's graphic interface.
+If a Client wants to connect to a Server that is run on the same machine, the `IP-adress` can be set to `0`.
 
-If the client wants to connect with the server that is run on the same machine, the `IP-adress` can be set to `0`.
-
-The Server PORT is `2908`
 
 ## Build
-### Prerequisites
-- g++
-- SFML 2.5.1
+### Prerequisites for Linux
+- `g++`
+- `SFML 2.5.1 -> libsfml-dev`
 
 To build client executable run `g++ Interface.cpp -o client-app -lsfml-graphics -lsfml-window -lsfml-system`.
 
